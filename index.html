@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zerodha Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f0f2f5;color:#1a1a2e;font-family:'Inter',sans-serif;min-height:100vh}
+
+  /* Dashboard */
+  .header{background:#fff;border-bottom:2px solid #e8eaed;padding:14px 28px;display:flex;justify-content:space-between;align-items:center}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#387ed1,#1a56a4);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+  .logo h1{font-size:17px;font-weight:700}
+  .logo span{font-size:11px;color:#888;font-weight:400;margin-left:4px}
+  .header-right{display:flex;align-items:center;gap:10px}
+  .updated{font-size:11px;color:#888;background:#f5f5f5;padding:5px 12px;border-radius:20px;border:1px solid #e0e0e0}
+  .logout-btn{font-size:11px;color:#c0392b;background:#fde8e8;padding:5px 12px;border-radius:20px;border:1px solid #f5c0c0;cursor:pointer}
+  .status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+  .dot-live{background:#1a7a4a;animation:pulse 2s infinite}
+  .dot-err{background:#c0392b}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-bottom:1px solid #e8eaed}
+  .stat{padding:18px 24px;border-right:1px solid #e8eaed}
+  .stat:last-child{border-right:none}
+  .stat .lbl{font-size:12px;color:#999;margin-bottom:8px}
+  .val{font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;display:flex;align-items:baseline}
+  .val .dec{font-size:14px;font-weight:400;color:#888}
+  .val-row{display:flex;align-items:center;gap:8px;margin-top:2px}
+  .pct-badge{font-size:11px;font-weight:500;padding:2px 7px;border-radius:4px}
+  .pct-g{background:#e6f4ed;color:#1a7a4a}
+  .pct-r{background:#fde8e8;color:#c0392b}
+  .g{color:#1a7a4a}.r{color:#c0392b}
+
+  .table-container{margin:16px 28px 20px}
+  .toolbar{display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+  .search-box{flex:1;min-width:220px;position:relative}
+  .search-box input{width:100%;padding:8px 12px 8px 34px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;color:#1a1a2e;outline:none;font-family:inherit}
+  .search-box input:focus{border-color:#387ed1;box-shadow:0 0 0 3px rgba(56,126,209,.1)}
+  .search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#aaa}
+  .count-badge{font-size:12px;color:#888;white-space:nowrap}
+
+  .table-wrap{background:#fff;border-radius:12px;border:1px solid #e8eaed;overflow:hidden}
+  .table-scroll{overflow-y:auto;max-height:640px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead{position:sticky;top:0;z-index:10}
+  th{padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none;white-space:nowrap;background:#f8f9fa;border-bottom:2px solid #e8eaed}
+  th:hover{background:#eef2f8;color:#387ed1}
+  th .si{margin-left:4px;font-size:9px;opacity:.35}
+  th.asc .si,th.desc .si{opacity:1;color:#387ed1}
+  td{padding:10px 14px;border-bottom:1px solid #f0f0f0;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fafbff}
+  .sym{font-weight:600;color:#1a1a2e}
+  .pos{color:#1a7a4a;font-weight:500}.neg{color:#c0392b;font-weight:500}
+  .pp{color:#1a7a4a;font-weight:600}.pn{color:#c0392b;font-weight:600}
+
+  ::-webkit-scrollbar{height:6px;width:6px}
+  ::-webkit-scrollbar-track{background:#f5f5f5}
+  ::-webkit-scrollbar-thumb{background:#d0d0d0;border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:#bbb}
+
+  @media(max-width:700px){
+    .summary{grid-template-columns:1fr 1fr}
+    .table-container{margin:12px}
+    .header{padding:12px 16px}
+  }
+</style>
+</head>
+<body>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">Z</div>
+      <h1>Zerodha Dashboard <span>Holdings</span></h1>
+    </div>
+    <div class="header-right">
+      <div class="updated" id="ts"><span class="status-dot dot-live" id="sdot"></span>Updated: —</div>
+      <div class="logout-btn" onclick="logout()">✕ Disconnect</div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="stat"><div class="lbl">Total Investment</div><div class="val-row"><div class="val" id="inv">—</div></div></div>
+    <div class="stat"><div class="lbl">Current Value</div><div class="val-row"><div class="val" id="cur">—</div></div></div>
+    <div class="stat"><div class="lbl">Day's P&amp;L</div><div class="val-row"><div class="val" id="tdc">—</div><span class="pct-badge" id="tdc-pct"></span></div></div>
+    <div class="stat"><div class="lbl">Total P&amp;L</div><div class="val-row"><div class="val" id="pnl">—</div><span class="pct-badge" id="pnl-pct"></span></div></div>
+  </div>
+
+  <div class="table-container">
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search" placeholder="Search symbol, name or sector…" oninput="renderTable()">
+      </div>
+      <div class="count-badge" id="rc"></div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table><thead id="th"></thead><tbody id="tb"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const META={
+  "5PAISA":   {name:"5paisa Capital",            sector:"Financials"},
+  "AARTIIND": {name:"Aarti Industries",           sector:"Chemicals"},
+  "AAVAS":    {name:"Aavas Financiers",           sector:"Financials"},
+  "APOLLOHOSP":{name:"Apollo Hospitals",          sector:"Healthcare"},
+  "APTUS":    {name:"Aptus Value Housing",        sector:"Financials"},
+  "AWL":      {name:"Adani Wilmar",               sector:"FMCG"},
+  "BANDHANBNK":{name:"Bandhan Bank",              sector:"Financials"},
+  "BCG":      {name:"Brightcom Group",            sector:"Technology"},
+  "BDL":      {name:"Bharat Dynamics",            sector:"Defence"},
+  "BEL":      {name:"Bharat Electronics",         sector:"Defence"},
+  "BHARATFORG":{name:"Bharat Forge",              sector:"Auto & Engg"},
+  "CIPLA":    {name:"Cipla",                      sector:"Healthcare"},
+  "CLEAN":    {name:"Clean Science",              sector:"Chemicals"},
+  "COCHINSHIP":{name:"Cochin Shipyard",           sector:"Defence"},
+  "COFORGE":  {name:"Coforge",                    sector:"Technology"},
+  "CROMPTON": {name:"Crompton Greaves",           sector:"Consumer Durables"},
+  "DATAPATTNS":{name:"Data Patterns",             sector:"Defence"},
+  "DIXON":    {name:"Dixon Technologies",         sector:"Technology"},
+  "DREAMFOLKS":{name:"Dreamfolks Services",       sector:"Services"},
+  "GOLDBEES": {name:"Nippon Gold BeES ETF",       sector:"Gold ETF"},
+  "GRSE":     {name:"Garden Reach Shipbuilders",  sector:"Defence"},
+  "HAL":      {name:"Hindustan Aeronautics",      sector:"Defence"},
+  "HAPPSTMNDS":{name:"Happiest Minds",            sector:"Technology"},
+  "HINDCOPPER":{name:"Hindustan Copper",          sector:"Metals"},
+  "IEX":      {name:"Indian Energy Exchange",     sector:"Energy"},
+  "INDIGOPNTS":{name:"Indigo Paints",             sector:"Paints"},
+  "INDUSINDBK":{name:"IndusInd Bank",             sector:"Financials"},
+  "INFY":     {name:"Infosys",                    sector:"Technology"},
+  "IRCTC":    {name:"IRCTC",                      sector:"Services"},
+  "ITBEES":   {name:"Nippon IT BeES ETF",         sector:"IT ETF"},
+  "JIOFIN":   {name:"Jio Financial Services",     sector:"Financials"},
+  "KANSAINER":{name:"Kansai Nerolac Paints",      sector:"Paints"},
+  "LIQUIDCASE":{name:"ICICI Liquid ETF",          sector:"Liquid ETF"},
+  "MAXHEALTH":{name:"Max Healthcare",             sector:"Healthcare"},
+  "MAZDOCK":  {name:"Mazagon Dock",               sector:"Defence"},
+  "MODEFENCE":{name:"Mirae Defence ETF",          sector:"Defence ETF"},
+  "MOREALTY": {name:"Motilal Realty ETF",         sector:"Realty ETF"},
+  "PVRINOX":  {name:"PVR Inox",                   sector:"Entertainment"},
+  "RENUKA":   {name:"Shree Renuka Sugars",        sector:"Sugar"},
+  "ROSSARI":  {name:"Rossari Biotech",            sector:"Chemicals"},
+  "SHAREINDIA":{name:"Share India Securities",    sector:"Financials"},
+  "SILVERBEES":{name:"Nippon Silver BeES ETF",    sector:"Silver ETF"},
+  "SOLARINDS":{name:"Solar Industries",           sector:"Industrials"},
+  "SWSOLAR":  {name:"Sterling & Wilson Solar",    sector:"Energy"},
+  "TATAELXSI":{name:"Tata Elxsi",                 sector:"Technology"},
+  "TCS":      {name:"Tata Consultancy Services",  sector:"Technology"},
+  "TEJASNET": {name:"Tejas Networks",             sector:"Telecom"},
+  "TITAGARH": {name:"Titagarh Rail Systems",      sector:"Railways"},
+  "TMPV":     {name:"Tata Motors",                sector:"Auto & Engg"},
+  "TRENT":    {name:"Trent",                      sector:"Retail"},
+  "UTTAMSUGAR":{name:"Uttam Sugar",               sector:"Sugar"},
+  "VAIBHAVGBL":{name:"Vaibhav Global",            sector:"Retail"},
+  "VBL":      {name:"Varun Beverages",            sector:"FMCG"},
+  "WAAREEENER":{name:"Waaree Energies",           sector:"Energy"},
+  "ZENTEC":   {name:"Zen Technologies",           sector:"Technology"}
+};
+
+let H=[], refreshTimer=null;
+let sCol=null, sDir=0;
+
+fetchHoldings();
+
+function logout(){
+  clearInterval(refreshTimer);
+  API_KEY='';ACCESS_TOKEN='';H=[];
+}
+
+function showErr(msg){
+  const e=document.getElementById('token-err');
+  e.textContent=msg;e.style.display='block';
+}
+
+// ── Kite API ──────────────────────────────────────
+async function fetchHoldings(){
+  try{
+    const res=await fetch('http://localhost:3000/portfolio/holdings',{
+      headers:{
+        'X-Kite-Version':'3'
+      }
+    });
+    const json=await res.json();
+    if(json.status==='error'){
+      setStatus(false);
+      return;
+    }
+    const raw=json.data||[];
+    H=raw.map(h=>({
+      ...h,
+      ...(META[h.tradingsymbol]||{name:h.tradingsymbol,sector:'Other'}),
+      _inv:h.quantity*h.average_price,
+      _cur:h.quantity*h.last_price,
+      _ret:(h.last_price-h.average_price)/h.average_price*100
+    }));
+    setStatus(true);
+    renderSummary();
+    renderTable();
+  }catch(e){
+    setStatus(false);
+    if(!H.length) showErr('Network error: '+e.message);
+  }
+}
+
+function setStatus(ok){
+  const dot=document.getElementById('sdot');
+  if(dot){dot.className='status-dot '+(ok?'dot-live':'dot-err');}
+  const d=new Date(),h=d.getHours()%12||12,m=d.getMinutes(),s=d.getSeconds(),ap=d.getHours()>=12?'PM':'AM';
+  const ts=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ap}`;
+  const el=document.getElementById('ts');
+  if(el) el.innerHTML=`<span class="status-dot ${ok?'dot-live':'dot-err'}"></span>${ok?'Updated':'Error'}: ${ts}`;
+}
+
+// Auto-refresh every 5s
+refreshTimer=setInterval(fetchHoldings,5000);
+
+// ── Formatting ────────────────────────────────────
+function fmtVal(n){
+  const s=Math.abs(n).toFixed(2).split('.');
+  return`<span>${Number(s[0]).toLocaleString('en-IN')}</span><span class="dec">.${s[1]}</span>`;
+}
+const fc=n=>Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fi=n=>Math.round(Math.abs(n)).toLocaleString('en-IN');
+
+// ── Summary ───────────────────────────────────────
+function renderSummary(){
+  let ti=0,tc=0,tdc=0,tp=0;
+  H.forEach(h=>{ti+=h._inv;tc+=h._cur;tdc+=h.day_change*h.quantity;tp+=h.pnl;});
+  const pp=tp/ti*100,dcPct=tdc/ti*100;
+  document.getElementById('inv').innerHTML=fmtVal(ti);
+  document.getElementById('cur').innerHTML=fmtVal(tc);
+  const tdcEl=document.getElementById('tdc');
+  tdcEl.innerHTML=(tdc<0?'-':'')+fmtVal(tdc);
+  tdcEl.className='val '+(tdc>=0?'g':'r');
+  const tdcB=document.getElementById('tdc-pct');
+  tdcB.textContent=(dcPct>=0?'+':'')+dcPct.toFixed(2)+'%';
+  tdcB.className='pct-badge '+(tdc>=0?'pct-g':'pct-r');
+  const pe=document.getElementById('pnl');
+  pe.innerHTML=(tp<0?'-':'')+fmtVal(tp);
+  pe.className='val '+(tp>=0?'g':'r');
+  const pb=document.getElementById('pnl-pct');
+  pb.textContent=(pp>=0?'+':'')+pp.toFixed(2)+'%';
+  pb.className='pct-badge '+(tp>=0?'pct-g':'pct-r');
+}
+
+// ── Table ─────────────────────────────────────────
+const COLS=[
+  {k:'tradingsymbol',l:'Symbol',str:true,fmt:v=>`<span class="sym">${v}</span>`},
+  {k:'quantity',l:'Qty',num:true,fmt:v=>v},
+  {k:'average_price',l:'Avg Price',num:true,fmt:v=>fc(v)},
+  {k:'last_price',l:'LTP',num:true,fmt:(v,r)=>`<span class="${r.day_change>=0?'pos':'neg'}">${fc(v)}</span>`},
+  {k:'_inv',l:'Invested',num:true,fmt:v=>fi(v)},
+  {k:'_cur',l:'Current',num:true,fmt:v=>fi(v)},
+  {k:'pnl',l:'P&L',num:true,fmt:v=>`<span class="${v>=0?'pp':'pn'}">${v>=0?'+':'-'}${fi(v)}</span>`},
+  {k:'_ret',l:'Return %',num:true,fmt:v=>`<span class="${v>=0?'pos':'neg'}">${v>=0?'+':''}${v.toFixed(2)}%</span>`},
+  {k:'day_change',l:'Day Chg',num:true,fmt:(v,r)=>`<span class="${v>=0?'pos':'neg'}">${v>=0?'+':''}${v.toFixed(2)} (${r.day_change_percentage.toFixed(2)}%)</span>`},
+];
+
+function cycleSort(k){
+  if(sCol!==k){sCol=k;sDir=1;}
+  else if(sDir===1)sDir=-1;
+  else{sCol=null;sDir=0;}
+  renderTable();
+}
+
+function renderTable(){
+  const q=(document.getElementById('search')||{}).value||'';
+  const ql=q.toLowerCase().trim();
+  let data=H.filter(h=>!ql||
+    h.tradingsymbol.toLowerCase().includes(ql)||
+    h.name.toLowerCase().includes(ql)||
+    h.sector.toLowerCase().includes(ql)
+  );
+  if(sCol&&sDir!==0){
+    const col=COLS.find(c=>c.k===sCol);
+    data=[...data].sort((a,b)=>sDir*(col.str?(a[sCol]<b[sCol]?-1:a[sCol]>b[sCol]?1:0):a[sCol]-b[sCol]));
+  }
+  const icon=k=>sCol!==k?'<span class="si">⇅</span>':(sDir===1?'<span class="si">▲</span>':'<span class="si">▼</span>');
+  const cls=k=>sCol===k?(sDir===1?'asc':'desc'):'';
+  document.getElementById('th').innerHTML='<tr>'+COLS.map(c=>`<th class="${cls(c.k)}" onclick="cycleSort('${c.k}')">${c.l}${icon(c.k)}</th>`).join('')+'</tr>';
+  document.getElementById('rc').textContent=`${data.length} of ${H.length} holdings`;
+  document.getElementById('tb').innerHTML=data.map(h=>'<tr>'+COLS.map(c=>`<td>${c.fmt(h[c.k],h)}</td>`).join('')+'</tr>').join('');
+}
+</script>
+</body>
+</html>
