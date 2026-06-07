@@ -1,3 +1,5 @@
+require("dotenv").config({ quiet: true });
+
 const http = require("http");
 const https = require("https");
 const fs = require("fs");
@@ -16,19 +18,19 @@ let ACCESS_TOKEN = "";
 function serveIndex(res) {
 
   const filePath = path.resolve(__dirname, "index.html");
-  
+
   fs.readFile(filePath, (err, data) => {
 
     if (err) {
-	  console.error(err);
+      console.error(err);
 
       res.writeHead(500, {
         "Content-Type": "text/plain",
       });
 
       res.end(err.message);
-      
-	  return;
+
+      return;
     }
 
     res.writeHead(200, {
@@ -211,9 +213,9 @@ const server = http.createServer((req, res) => {
         });
 
         res.end(`
-          <h2>✅ Login Successful</h2>
-          <p>Access token generated.</p>
-          <p>You may now use Kite APIs.</p>
+          <script>
+            window.close();
+          </script>
         `);
       }
     );
