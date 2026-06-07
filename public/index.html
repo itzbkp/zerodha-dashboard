@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <title>Zerodha Dashboard</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
@@ -32,27 +36,9 @@
         align-items: center;
         gap: 10px;
       }
-      .logo-icon {
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(135deg, #387ed1, #1a56a4);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-weight: 700;
-        font-size: 14px;
-      }
       .logo h1 {
         font-size: 17px;
         font-weight: 700;
-      }
-      .logo span {
-        font-size: 11px;
-        color: #888;
-        font-weight: 400;
-        margin-left: 4px;
       }
       .header-right {
         display: flex;
@@ -66,15 +52,6 @@
         padding: 5px 12px;
         border-radius: 20px;
         border: 1px solid #e0e0e0;
-      }
-      .logout-btn {
-        font-size: 11px;
-        color: #c0392b;
-        background: #fde8e8;
-        padding: 5px 12px;
-        border-radius: 20px;
-        border: 1px solid #f5c0c0;
-        cursor: pointer;
       }
       .status-dot {
         width: 7px;
@@ -315,14 +292,13 @@
     <div id="dashboard">
       <div class="header">
         <div class="logo">
-          <div class="logo-icon">Z</div>
-          <h1>Zerodha Dashboard <span>Holdings</span></h1>
+          <img src="favicon.ico" alt="Zerodha Logo" width="32" height="32" />
+          <h1>Zerodha Dashboard</h1>
         </div>
         <div class="header-right">
           <div class="updated" id="ts">
             <span class="status-dot dot-live" id="sdot"></span>Updated: —
           </div>
-          <div class="logout-btn" onclick="logout()">✕ Disconnect</div>
         </div>
       </div>
 
@@ -450,13 +426,6 @@
         sDir = 0;
 
       fetchHoldings();
-
-      function logout() {
-        clearInterval(refreshTimer);
-        API_KEY = "";
-        ACCESS_TOKEN = "";
-        H = [];
-      }
 
       function showErr(msg) {
         const e = document.getElementById("token-err");
