@@ -185,7 +185,7 @@ function showErr(msg){
 // ── Kite API ──────────────────────────────────────
 async function fetchHoldings(){
   try{
-    const res=await fetch('http://localhost:3000/portfolio/holdings',{
+    const res=await fetch('/portfolio/holdings',{
       headers:{
         'X-Kite-Version':'3'
       }
