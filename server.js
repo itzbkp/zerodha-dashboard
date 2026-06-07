@@ -7,6 +7,12 @@ const url = require("url");
 const path = require("path");
 const crypto = require("crypto");
 
+const publicFiles = {
+  "/": "index.html",
+  "/index.html": "index.html",
+  "/favicon.ico": "favicon.ico",
+};
+
 const KITE_HOST = "api.kite.trade";
 
 const API_KEY = process.env.API_KEY;
@@ -14,31 +20,42 @@ const API_SECRET = process.env.API_SECRET;
 
 let ACCESS_TOKEN = "";
 
-// Serve index.html
-function serveIndex(res) {
+// Serve public files
+function serveFiles(req, res) {
 
-  const filePath = path.resolve(__dirname, "index.html");
+  if (publicFiles[req.url]) {
 
-  fs.readFile(filePath, (err, data) => {
+    const filePath = path.resolve(
+      __dirname,
+      publicFiles[req.url]
+    );
 
-    if (err) {
-      console.error(err);
+    fs.readFile(filePath, (err, data) => {
 
-      res.writeHead(500, {
-        "Content-Type": "text/plain",
+      if (err) {
+        res.writeHead(404);
+        res.end();
+        return;
+      }
+
+      const ext = path.extname(filePath);
+
+      const contentTypes = {
+        ".html": "text/html",
+        ".ico": "image/x-icon",
+      };
+
+      res.writeHead(200, {
+        "Content-Type":
+          contentTypes[ext] ||
+          "application/octet-stream",
       });
 
-      res.end(err.message);
-
-      return;
-    }
-
-    res.writeHead(200, {
-      "Content-Type": "text/html",
+      res.end(data);
     });
 
-    res.end(data);
-  });
+    return;
+  }
 }
 
 // Generate access token
@@ -146,10 +163,11 @@ const server = http.createServer((req, res) => {
   // Homepage
   if (
     req.url === "/" ||
-    req.url === "/index.html"
+    req.url === "/index.html" ||
+    req.url === "/favicon.ico"
   ) {
 
-    serveIndex(res);
+    serveFiles(req, res);
     return;
   }
 
