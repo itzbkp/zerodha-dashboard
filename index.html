@@ -471,10 +471,12 @@
             "https://itzbkp-zerodha-dashboard.vercel.app/portfolio/holdings"
           );
           const json = await res.json();
-          if (json.status === "error") {
+          if (json.status === "Login-Required") {
             setStatus(false);
             const newTab = window.open("/login", "_blank");
-            newTab.close();
+            newTab.onload = () => {
+              newTab.close();
+            };
             return;
           }
           const raw = json.data || [];

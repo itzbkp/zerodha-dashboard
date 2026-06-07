@@ -227,8 +227,7 @@ const server = http.createServer((req, res) => {
     });
 
     res.end(JSON.stringify({
-      status: "error",
-      message: "Login first at /login",
+      status: "Login-Required"
     }));
 
     return;
