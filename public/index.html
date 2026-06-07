@@ -445,7 +445,8 @@
             const newTab = window.open("/login", "_blank");
             setTimeout(() => {
               newTab.close();
-            }, 1000);
+              fetchHoldings();
+            }, 2500);
             return;
           }
           const raw = json.data || [];
@@ -485,7 +486,7 @@
       }
 
       // Auto-refresh every 5s
-      refreshTimer = setInterval(fetchHoldings, 2000);
+      refreshTimer = setInterval(fetchHoldings, 5000);
 
       // ── Formatting ────────────────────────────────────
       function fmtVal(n) {
