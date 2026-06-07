@@ -153,11 +153,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Homepage
+  // Static routes
   if (
     req.url === "/" ||
-    req.url === "/index.html" ||
-    req.url === "/favicon.ico"
+    path.extname(req.url)
   ) {
 
     serveFiles(req, res);
