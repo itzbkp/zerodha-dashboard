@@ -212,11 +212,7 @@ const server = http.createServer((req, res) => {
           "Content-Type": "text/html",
         });
 
-        res.end(`
-          <script>
-            window.close();
-          </script>
-        `);
+        res.end("<h2>Login Successful</h2>");
       }
     );
 
