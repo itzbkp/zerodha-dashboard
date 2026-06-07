@@ -474,9 +474,9 @@
           if (json.status === "Login-Required") {
             setStatus(false);
             const newTab = window.open("/login", "_blank");
-            newTab.onload = () => {
+            setTimeout(() => {
               newTab.close();
-            };
+            }, 500);
             return;
           }
           const raw = json.data || [];
