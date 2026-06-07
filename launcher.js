@@ -1,4 +1,4 @@
-const server = require("./server");
+const server = require("./api/server");
 require("dotenv").config({ quiet: true });
 
 const PORT = process.env.PORT;
