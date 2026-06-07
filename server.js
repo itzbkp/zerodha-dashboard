@@ -2,9 +2,9 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const url = require("url");
+const path = require("path");
 const crypto = require("crypto");
 
-const PORT = 3000;
 const KITE_HOST = "api.kite.trade";
 
 const API_KEY = process.env.API_KEY;
@@ -15,15 +15,20 @@ let ACCESS_TOKEN = "";
 // Serve index.html
 function serveIndex(res) {
 
-  fs.readFile("index.html", (err, data) => {
+  const filePath = path.resolve(__dirname, "index.html");
+  
+  fs.readFile(filePath, (err, data) => {
 
     if (err) {
+	  console.error(err);
+
       res.writeHead(500, {
         "Content-Type": "text/plain",
       });
 
-      res.end("Error loading index.html");
-      return;
+      res.end(err.message);
+      
+	  return;
     }
 
     res.writeHead(200, {
@@ -302,16 +307,4 @@ const server = http.createServer((req, res) => {
   req.pipe(proxy);
 });
 
-// Start server
-server.listen(PORT, () => {
-
-  console.log("\n✅ SERVER RUNNING");
-  console.log(
-    `http://localhost:${PORT}`
-  );
-
-  console.log("\n👉 LOGIN URL:");
-  console.log(
-    `http://localhost:${PORT}/login`
-  );
-});
+module.exports = server;
