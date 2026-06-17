@@ -43,10 +43,10 @@
         gap: 10px;
       }
       .updated {
-        font-size: 11px;
-        color: #8a8a8a;
+        font-size: 12px;
+        color: #ffffff;
         background: #1a1a1a;
-        padding: 5px 12px;
+        padding: 6px 14px;
         border-radius: 20px;
         border: 1px solid #4a4a4a;
       }
@@ -107,15 +107,16 @@
       }
       .val-row {
         display: flex;
-        align-items: center;
+        align-items: flex-end;
         gap: 8px;
         margin-top: 2px;
       }
       .pct-badge {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 500;
-        padding: 2px 7px;
+        padding: 3px 8px;
         border-radius: 4px;
+        align-self: flex-end;
       }
       .pct-g {
         background: rgba(76, 175, 80, 0.15);
@@ -217,7 +218,7 @@
       }
       .chip.add-tag-chip {
         border-style: dashed;
-        color: #6a6a6a;
+        color: #b0b0b0;
         border-color: #5a5a5a;
       }
       .chip.add-tag-chip:hover {
@@ -225,7 +226,7 @@
         color: #5b8def;
       }
       .chip.edit-toggle-chip {
-        color: #8a8a8a;
+        color: #b0b0b0;
       }
       .chip.edit-toggle-chip:hover {
         color: #5b8def;
@@ -493,13 +494,22 @@
           <input
             type="text"
             id="search"
-            placeholder="Search symbol or name"
+            placeholder="Search by symbol or tag"
             oninput="renderTable()"
           />
         </div>
         <div class="header-right">
           <div class="updated" id="ts">
-            <span class="status-dot dot-live" id="sdot"></span>Updated: —
+            <span class="status-dot dot-live" id="sdot"></span>Live&nbsp;<span
+              style="
+                font-size: 32px;
+                line-height: 0;
+                vertical-align: middle;
+                position: relative;
+                top: -0.5px;
+              "
+              >·</span
+            >&nbsp;<span id="ts-text"></span>
           </div>
         </div>
       </div>
@@ -610,6 +620,25 @@
         localStorage.setItem("zd_stocktags", JSON.stringify(stockTags));
       }
 
+      let lastTagFilterSignature = "";
+      function tagFilterRowSignatureChanged() {
+        const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
+        const sig = JSON.stringify({
+          tags: sorted,
+          counts: sorted.map(
+            (t) =>
+              Object.values(stockTags).filter((arr) => arr.includes(t)).length
+          ),
+          active: [...activeTagFilters].sort(),
+          editMode: editModeOn
+        });
+        if (sig !== lastTagFilterSignature) {
+          lastTagFilterSignature = sig;
+          return true;
+        }
+        return false;
+      }
+
       // ── Kite API ──────────────────────────────────────
       async function fetchHoldings() {
         try {
@@ -635,7 +664,7 @@
           }));
           setStatus(true);
           renderSummary();
-          renderTagFilterRow();
+          if (tagFilterRowSignatureChanged()) renderTagFilterRow();
           renderTable();
         } catch (e) {
           setStatus(false);
@@ -651,10 +680,25 @@
           s = d.getSeconds(),
           ap = d.getHours() >= 12 ? "PM" : "AM";
         const ts = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")} ${ap}`;
-        const el = document.getElementById("ts");
-        if (el)
-          el.innerHTML = `<span class="status-dot ${ok ? "dot-live" : "dot-err"}"></span>${ok ? "Updated" : "Error"}: ${ts}`;
+        const tsText = document.getElementById("ts-text");
+        if (tsText) tsText.textContent = ts;
+        const updatedEl = document.querySelector(".updated");
+        if (updatedEl) {
+          updatedEl.innerHTML = `<span class="status-dot ${ok ? "dot-live" : "dot-err"}" id="sdot"></span>${ok ? "Live" : "Error"}&nbsp;<span style="font-size:32px;line-height:0;vertical-align:middle;position:relative;top:-0.5px">·</span>&nbsp;<span id="ts-text">${ts}</span>`;
+        }
       }
+
+      // Show current time immediately on load, before first fetch completes
+      (function initialTime() {
+        const d = new Date(),
+          h = d.getHours() % 12 || 12,
+          m = d.getMinutes(),
+          s = d.getSeconds(),
+          ap = d.getHours() >= 12 ? "PM" : "AM";
+        const ts = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")} ${ap}`;
+        const tsText = document.getElementById("ts-text");
+        if (tsText) tsText.textContent = ts;
+      })();
 
       refreshTimer = setInterval(fetchHoldings, 5000);
       fetchHoldings();
@@ -705,7 +749,7 @@
       function renderTagFilterRow() {
         const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
         const row = document.getElementById("tag-filters");
-        let html = '<span class="filter-label">Tags:</span>';
+        let html = "";
         sorted.forEach((t) => {
           const count = Object.values(stockTags).filter((arr) =>
             arr.includes(t)
@@ -734,10 +778,21 @@
           html += `</span>`;
         });
         html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;overflow:hidden;border:1px solid #2a2a2a">`;
-        html += `<span class="chip add-tag-chip grouped-chip" style="border:none;border-radius:0" onclick="openAddTagModal()"><span style="font-size:22px;line-height:0;position:relative;top:-2px">+</span><span>Add Tag</span></span>`;
+        html += `<span class="chip add-tag-chip grouped-chip" style="border:none;border-radius:0" onclick="openAddTagModal()"><span style="font-size:22px;line-height:0;position:relative;top:-2px">+</span><span>Add</span></span>`;
         html += `<span class="chip edit-toggle-chip grouped-chip ${editModeOn ? "active" : ""}" style="border:none;border-left:1px solid #2a2a2a;border-radius:0" onclick="toggleEditMode()" title="Toggle edit mode"><span style="font-size:13px;line-height:0;position:relative;top:-1px">✎</span><span>Edit</span></span>`;
+        html += `<span class="chip edit-toggle-chip grouped-chip" style="border:none;border-left:1px solid #4a4a4a;border-radius:0" onclick="resetFilters()" title="Clear filters and search"><span style="font-size:18px;line-height:0;position:relative;top:-1px">↺</span><span>Reset</span></span>`;
         html += `</span>`;
         row.innerHTML = html;
+      }
+
+      function resetFilters() {
+        activeTagFilters.clear();
+        autoTagFilters.clear();
+        const searchEl = document.getElementById("search");
+        if (searchEl) searchEl.value = "";
+        renderTagFilterRow();
+        renderTable();
+        focusSearch();
       }
 
       function toggleEditMode() {
@@ -761,7 +816,7 @@
       const COLS = [
         {
           k: "tradingsymbol",
-          l: "Instrument",
+          l: "Symbol",
           str: true,
           fmt: (v) => `<span class="sym">${v}</span>`
         },
@@ -814,6 +869,10 @@
         if (key === "_ret") return Math.abs(row[key]);
         return row[key];
       }
+
+      // Render tag filters and empty table shell immediately, before first API call
+      renderTagFilterRow();
+      renderTable();
 
       function renderTable() {
         const rawQ =
