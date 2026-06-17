@@ -3,10 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="manifest" href="/site.webmanifest" />
     <title>Zerodha Dashboard</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
@@ -16,16 +12,16 @@
         box-sizing: border-box;
       }
       body {
-        background: #f0f2f5;
-        color: #1a1a2e;
+        background: #111111;
+        color: #d4d4d4;
         font-family: "Inter", sans-serif;
         min-height: 100vh;
+        font-variant-numeric: tabular-nums;
       }
 
-      /* Dashboard */
       .header {
-        background: #fff;
-        border-bottom: 2px solid #e8eaed;
+        background: #111111;
+        border-bottom: 1px solid #4a4a4a;
         padding: 14px 28px;
         display: flex;
         justify-content: space-between;
@@ -38,7 +34,8 @@
       }
       .logo h1 {
         font-size: 17px;
-        font-weight: 700;
+        font-weight: 600;
+        color: #e8e8e8;
       }
       .header-right {
         display: flex;
@@ -47,11 +44,11 @@
       }
       .updated {
         font-size: 11px;
-        color: #888;
-        background: #f5f5f5;
+        color: #8a8a8a;
+        background: #1a1a1a;
         padding: 5px 12px;
         border-radius: 20px;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #4a4a4a;
       }
       .status-dot {
         width: 7px;
@@ -61,11 +58,11 @@
         margin-right: 5px;
       }
       .dot-live {
-        background: #1a7a4a;
+        background: #4caf50;
         animation: pulse 2s infinite;
       }
       .dot-err {
-        background: #c0392b;
+        background: #f44336;
       }
       @keyframes pulse {
         0%,
@@ -80,25 +77,25 @@
       .summary {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        background: #fff;
-        border-bottom: 1px solid #e8eaed;
+        background: #111111;
+        border-bottom: 1px solid #4a4a4a;
       }
       .stat {
         padding: 18px 24px;
-        border-right: 1px solid #e8eaed;
+        border-right: 1px solid #4a4a4a;
       }
       .stat:last-child {
         border-right: none;
       }
       .stat .lbl {
         font-size: 12px;
-        color: #999;
+        color: #8a8a8a;
         margin-bottom: 8px;
       }
       .val {
         font-size: 26px;
-        font-weight: 600;
-        color: #1a1a2e;
+        font-weight: 500;
+        color: #e8e8e8;
         line-height: 1;
         display: flex;
         align-items: baseline;
@@ -106,7 +103,7 @@
       .val .dec {
         font-size: 14px;
         font-weight: 400;
-        color: #888;
+        color: #8a8a8a;
       }
       .val-row {
         display: flex;
@@ -121,18 +118,18 @@
         border-radius: 4px;
       }
       .pct-g {
-        background: #e6f4ed;
-        color: #1a7a4a;
+        background: rgba(76, 175, 80, 0.15);
+        color: #4caf50;
       }
       .pct-r {
-        background: #fde8e8;
-        color: #c0392b;
+        background: rgba(244, 67, 54, 0.15);
+        color: #f44336;
       }
       .g {
-        color: #1a7a4a;
+        color: #4caf50;
       }
       .r {
-        color: #c0392b;
+        color: #f44336;
       }
 
       .table-container {
@@ -141,53 +138,124 @@
       .toolbar {
         display: flex;
         gap: 10px;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         align-items: center;
         flex-wrap: wrap;
       }
       .search-box {
-        flex: 1;
-        min-width: 220px;
+        flex: 1 1 auto;
+        min-width: 200px;
         position: relative;
       }
       .search-box input {
         width: 100%;
         padding: 8px 12px 8px 34px;
-        border: 1px solid #ddd;
+        border: 1px solid #4a4a4a;
         border-radius: 8px;
         font-size: 13px;
-        background: #fff;
-        color: #1a1a2e;
+        background: #161616;
+        color: #d4d4d4;
         outline: none;
         font-family: inherit;
       }
+      .search-box input::placeholder {
+        color: #6a6a6a;
+      }
       .search-box input:focus {
         border-color: #387ed1;
-        box-shadow: 0 0 0 3px rgba(56, 126, 209, 0.1);
+        box-shadow: 0 0 0 3px rgba(56, 126, 209, 0.15);
       }
       .search-box svg {
         position: absolute;
         left: 10px;
         top: 50%;
         transform: translateY(-50%);
-        color: #aaa;
+        color: #6a6a6a;
       }
       .count-badge {
         font-size: 12px;
-        color: #888;
+        color: #6a6a6a;
         white-space: nowrap;
+        min-width: 110px;
+        text-align: right;
+        flex-shrink: 0;
+      }
+
+      .filter-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+        align-items: center;
+        min-height: 28px;
+      }
+      .filter-label {
+        font-size: 13px;
+        color: #8a8a8a;
+        font-weight: 400;
+        margin-right: 4px;
+      }
+      .chip {
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #4a4a4a;
+        background: #161616;
+        color: #b0b0b0;
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+      }
+      .chip:hover {
+        border-color: #5b8def;
+        color: #5b8def;
+      }
+      .chip.active {
+        background: #2d5fc4;
+        border-color: #2d5fc4;
+        color: #fff;
+      }
+      .chip.add-tag-chip {
+        border-style: dashed;
+        color: #6a6a6a;
+        border-color: #5a5a5a;
+      }
+      .chip.add-tag-chip:hover {
+        border-color: #5b8def;
+        color: #5b8def;
+      }
+      .chip.edit-toggle-chip {
+        color: #8a8a8a;
+      }
+      .chip.edit-toggle-chip:hover {
+        color: #5b8def;
+      }
+      .chip.edit-toggle-chip.active {
+        background: #2d5fc4;
+        color: #fff;
+      }
+      .grouped-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 6px 14px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 13px;
       }
 
       .table-wrap {
-        background: #fff;
+        background: #111111;
         border-radius: 12px;
-        border: 1px solid #e8eaed;
+        border: 1px solid #4a4a4a;
         overflow: hidden;
       }
       .table-scroll {
-        overflow-y: auto;
-        max-height: 640px;
+        overflow-y: scroll;
+        max-height: 400px;
         overflow-x: auto;
+        scrollbar-gutter: stable;
       }
       table {
         width: 100%;
@@ -203,60 +271,173 @@
         padding: 11px 14px;
         text-align: left;
         font-size: 11px;
-        font-weight: 600;
-        color: #555;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-weight: 500;
+        color: #8a8a8a;
+        text-transform: none;
+        letter-spacing: 0;
         cursor: pointer;
         user-select: none;
         white-space: nowrap;
-        background: #f8f9fa;
-        border-bottom: 2px solid #e8eaed;
+        background: #111111;
+        border-bottom: 1px solid #4a4a4a;
       }
       th:hover {
-        background: #eef2f8;
-        color: #387ed1;
+        color: #c0c0c0;
       }
       th .si {
+        display: inline-block;
+        width: 14px;
         margin-left: 4px;
         font-size: 9px;
         opacity: 0.35;
+        text-align: center;
       }
       th.asc .si,
       th.desc .si {
         opacity: 1;
-        color: #387ed1;
+        color: #5b8def;
       }
       td {
-        padding: 10px 14px;
-        border-bottom: 1px solid #f0f0f0;
+        padding: 12px 14px;
+        border-bottom: 1px solid #3a3a3a;
         white-space: nowrap;
+        color: #d4d4d4;
       }
       tr:last-child td {
         border-bottom: none;
       }
       tr:hover td {
-        background: #fafbff;
+        background: #161616;
+      }
+      tbody tr {
+        cursor: pointer;
       }
       .sym {
-        font-weight: 600;
-        color: #1a1a2e;
+        font-weight: 500;
+        color: #e8e8e8;
       }
       .pos {
-        color: #1a7a4a;
-        font-weight: 500;
+        color: #4caf50;
+        font-weight: 400;
       }
       .neg {
-        color: #c0392b;
-        font-weight: 500;
+        color: #f44336;
+        font-weight: 400;
       }
       .pp {
-        color: #1a7a4a;
-        font-weight: 600;
+        color: #4caf50;
+        font-weight: 500;
       }
       .pn {
-        color: #c0392b;
+        color: #f44336;
+        font-weight: 500;
+      }
+
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: #161616;
+        border: 1px solid #4a4a4a;
+        border-radius: 14px;
+        padding: 8px 12px 12px 12px;
+        width: 400px;
+        max-width: 95vw;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .modal-header h3 {
+        font-size: 15px;
         font-weight: 600;
+        color: #e8e8e8;
+      }
+      .modal-close {
+        font-size: 26px;
+        color: #6a6a6a;
+        cursor: pointer;
+        line-height: 1;
+      }
+      .modal-close:hover {
+        color: #b0b0b0;
+      }
+      .tag-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .tag-pill-toggle {
+        font-size: 12px;
+        padding: 5px 13px;
+        border-radius: 20px;
+        border: 1.5px solid #4a4a4a;
+        background: #1a1a1a;
+        color: #b0b0b0;
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+        font-family: inherit;
+        font-weight: 500;
+      }
+      .tag-pill-toggle:hover {
+        border-color: #5b8def;
+        color: #5b8def;
+      }
+      .tag-pill-toggle.selected {
+        background: #2d5fc4;
+        border-color: #2d5fc4;
+        color: #fff;
+      }
+      .add-tag-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      .add-tag-row input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #4a4a4a;
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: inherit;
+        outline: none;
+        color: #d4d4d4;
+        background: #1a1a1a;
+      }
+      .add-tag-row input::placeholder {
+        color: #6a6a6a;
+      }
+      .add-tag-row input:focus {
+        border-color: #2d5fc4;
+        box-shadow: 0 0 0 3px rgba(45, 95, 196, 0.15);
+      }
+      .btn-add {
+        padding: 8px 16px;
+        background: #2d5fc4;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 400;
+        cursor: pointer;
+        font-family: inherit;
+        white-space: nowrap;
+      }
+      .btn-add:hover {
+        background: #244ea0;
       }
 
       ::-webkit-scrollbar {
@@ -264,14 +445,14 @@
         width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #f5f5f5;
+        background: #111111;
       }
       ::-webkit-scrollbar-thumb {
-        background: #d0d0d0;
+        background: #2a2a2a;
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #bbb;
+        background: #3a3a3a;
       }
 
       @media (max-width: 700px) {
@@ -288,12 +469,33 @@
     </style>
   </head>
   <body>
-    <!-- Dashboard -->
     <div id="dashboard">
       <div class="header">
         <div class="logo">
           <img src="favicon.ico" alt="Zerodha Logo" width="32" height="32" />
           <h1>Zerodha Dashboard</h1>
+        </div>
+        <div
+          class="search-box"
+          style="max-width: 600px; margin: 0 16px; flex: 1"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            id="search"
+            placeholder="Search symbol or name"
+            oninput="renderTable()"
+          />
         </div>
         <div class="header-right">
           <div class="updated" id="ts">
@@ -328,28 +530,8 @@
       </div>
 
       <div class="table-container">
-        <div class="toolbar">
-          <div class="search-box">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              id="search"
-              placeholder="Search symbol, name or sector…"
-              oninput="renderTable()"
-            />
-          </div>
-          <div class="count-badge" id="rc"></div>
-        </div>
+        <div class="filter-row" id="tag-filters"></div>
+
         <div class="table-wrap">
           <div class="table-scroll">
             <table>
@@ -361,76 +543,71 @@
       </div>
     </div>
 
+    <!-- Assign tags modal (row click) -->
+    <div class="modal-overlay" id="assign-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="assign-modal-title">Assign Tags</h3>
+          <span class="modal-close" onclick="closeAssignModal()">×</span>
+        </div>
+        <div class="tag-pills" id="assign-tag-pills"></div>
+      </div>
+    </div>
+
+    <!-- Add tag modal (filter row) -->
+    <div class="modal-overlay" id="addtag-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Add New Tag</h3>
+          <span class="modal-close" onclick="closeAddTagModal()">×</span>
+        </div>
+        <div class="add-tag-row">
+          <input
+            type="text"
+            id="new-tag-input"
+            placeholder="Tag name…"
+            onkeydown="if (event.key === 'Enter') createTag();"
+          />
+          <button class="btn-add" onclick="createTag()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rename tag modal -->
+    <div class="modal-overlay" id="renametag-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Rename Tag</h3>
+          <span class="modal-close" onclick="closeRenameTagModal()">×</span>
+        </div>
+        <div class="add-tag-row">
+          <input
+            type="text"
+            id="rename-tag-input"
+            placeholder="New tag name…"
+            onkeydown="if (event.key === 'Enter') confirmRenameTag();"
+          />
+          <button class="btn-add" onclick="confirmRenameTag()">Rename</button>
+        </div>
+      </div>
+    </div>
+
     <script>
-      const META = {
-        "5PAISA": { name: "5paisa Capital", sector: "Financials" },
-        AARTIIND: { name: "Aarti Industries", sector: "Chemicals" },
-        AAVAS: { name: "Aavas Financiers", sector: "Financials" },
-        APOLLOHOSP: { name: "Apollo Hospitals", sector: "Healthcare" },
-        APTUS: { name: "Aptus Value Housing", sector: "Financials" },
-        AWL: { name: "Adani Wilmar", sector: "FMCG" },
-        BANDHANBNK: { name: "Bandhan Bank", sector: "Financials" },
-        BCG: { name: "Brightcom Group", sector: "Technology" },
-        BDL: { name: "Bharat Dynamics", sector: "Defence" },
-        BEL: { name: "Bharat Electronics", sector: "Defence" },
-        BHARATFORG: { name: "Bharat Forge", sector: "Auto & Engg" },
-        CIPLA: { name: "Cipla", sector: "Healthcare" },
-        CLEAN: { name: "Clean Science", sector: "Chemicals" },
-        COCHINSHIP: { name: "Cochin Shipyard", sector: "Defence" },
-        COFORGE: { name: "Coforge", sector: "Technology" },
-        CROMPTON: { name: "Crompton Greaves", sector: "Consumer Durables" },
-        DATAPATTNS: { name: "Data Patterns", sector: "Defence" },
-        DIXON: { name: "Dixon Technologies", sector: "Technology" },
-        DREAMFOLKS: { name: "Dreamfolks Services", sector: "Services" },
-        GOLDBEES: { name: "Nippon Gold BeES ETF", sector: "Gold ETF" },
-        GRSE: { name: "Garden Reach Shipbuilders", sector: "Defence" },
-        HAL: { name: "Hindustan Aeronautics", sector: "Defence" },
-        HAPPSTMNDS: { name: "Happiest Minds", sector: "Technology" },
-        HINDCOPPER: { name: "Hindustan Copper", sector: "Metals" },
-        IEX: { name: "Indian Energy Exchange", sector: "Energy" },
-        INDIGOPNTS: { name: "Indigo Paints", sector: "Paints" },
-        INDUSINDBK: { name: "IndusInd Bank", sector: "Financials" },
-        INFY: { name: "Infosys", sector: "Technology" },
-        IRCTC: { name: "IRCTC", sector: "Services" },
-        ITBEES: { name: "Nippon IT BeES ETF", sector: "IT ETF" },
-        JIOFIN: { name: "Jio Financial Services", sector: "Financials" },
-        KANSAINER: { name: "Kansai Nerolac Paints", sector: "Paints" },
-        LIQUIDCASE: { name: "ICICI Liquid ETF", sector: "Liquid ETF" },
-        MAXHEALTH: { name: "Max Healthcare", sector: "Healthcare" },
-        MAZDOCK: { name: "Mazagon Dock", sector: "Defence" },
-        MODEFENCE: { name: "Mirae Defence ETF", sector: "Defence ETF" },
-        MOREALTY: { name: "Motilal Realty ETF", sector: "Realty ETF" },
-        PVRINOX: { name: "PVR Inox", sector: "Entertainment" },
-        RENUKA: { name: "Shree Renuka Sugars", sector: "Sugar" },
-        ROSSARI: { name: "Rossari Biotech", sector: "Chemicals" },
-        SHAREINDIA: { name: "Share India Securities", sector: "Financials" },
-        SILVERBEES: { name: "Nippon Silver BeES ETF", sector: "Silver ETF" },
-        SOLARINDS: { name: "Solar Industries", sector: "Industrials" },
-        SWSOLAR: { name: "Sterling & Wilson Solar", sector: "Energy" },
-        TATAELXSI: { name: "Tata Elxsi", sector: "Technology" },
-        TCS: { name: "Tata Consultancy Services", sector: "Technology" },
-        TEJASNET: { name: "Tejas Networks", sector: "Telecom" },
-        TITAGARH: { name: "Titagarh Rail Systems", sector: "Railways" },
-        TMPV: { name: "Tata Motors", sector: "Auto & Engg" },
-        TRENT: { name: "Trent", sector: "Retail" },
-        UTTAMSUGAR: { name: "Uttam Sugar", sector: "Sugar" },
-        VAIBHAVGBL: { name: "Vaibhav Global", sector: "Retail" },
-        VBL: { name: "Varun Beverages", sector: "FMCG" },
-        WAAREEENER: { name: "Waaree Energies", sector: "Energy" },
-        ZENTEC: { name: "Zen Technologies", sector: "Technology" }
-      };
-
       let H = [],
-        refreshTimer = null;
-      let sCol = null,
+        refreshTimer = null,
+        sCol = null,
         sDir = 0;
+      let activeTagFilters = new Set();
+      let autoTagFilters = new Set(); // tags activated automatically via search match
+      let editingSymbol = null;
+      let editModeOn = false;
 
-      fetchHoldings();
+      let globalTags = JSON.parse(localStorage.getItem("zd_tags") || "[]");
+      let stockTags = JSON.parse(localStorage.getItem("zd_stocktags") || "{}");
 
-      function showErr(msg) {
-        const e = document.getElementById("token-err");
-        e.textContent = msg;
-        e.style.display = "block";
+      function save() {
+        localStorage.setItem("zd_tags", JSON.stringify(globalTags));
+        localStorage.setItem("zd_stocktags", JSON.stringify(stockTags));
       }
 
       // ── Kite API ──────────────────────────────────────
@@ -442,38 +619,32 @@
           const json = await res.json();
           if (json.status === "Login-Required") {
             setStatus(false);
-            const newTab = window.open("/login", "_blank");
+            const t = window.open("/login", "_blank");
             setTimeout(() => {
-              newTab.close();
+              t.close();
               fetchHoldings();
-            }, 2500);
+            }, 2000);
             return;
           }
           const raw = json.data || [];
           H = raw.map((h) => ({
             ...h,
-            ...(META[h.tradingsymbol] || {
-              name: h.tradingsymbol,
-              sector: "Other"
-            }),
             _inv: h.quantity * h.average_price,
             _cur: h.quantity * h.last_price,
             _ret: ((h.last_price - h.average_price) / h.average_price) * 100
           }));
           setStatus(true);
           renderSummary();
+          renderTagFilterRow();
           renderTable();
         } catch (e) {
           setStatus(false);
-          if (!H.length) showErr("Network error: " + e.message);
         }
       }
 
       function setStatus(ok) {
         const dot = document.getElementById("sdot");
-        if (dot) {
-          dot.className = "status-dot " + (ok ? "dot-live" : "dot-err");
-        }
+        if (dot) dot.className = "status-dot " + (ok ? "dot-live" : "dot-err");
         const d = new Date(),
           h = d.getHours() % 12 || 12,
           m = d.getMinutes(),
@@ -485,8 +656,8 @@
           el.innerHTML = `<span class="status-dot ${ok ? "dot-live" : "dot-err"}"></span>${ok ? "Updated" : "Error"}: ${ts}`;
       }
 
-      // Auto-refresh every 5s
       refreshTimer = setInterval(fetchHoldings, 5000);
+      fetchHoldings();
 
       // ── Formatting ────────────────────────────────────
       function fmtVal(n) {
@@ -530,16 +701,73 @@
         pb.className = "pct-badge " + (tp >= 0 ? "pct-g" : "pct-r");
       }
 
+      // ── Tag filter row ────────────────────────────────
+      function renderTagFilterRow() {
+        const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
+        const row = document.getElementById("tag-filters");
+        let html = '<span class="filter-label">Tags:</span>';
+        sorted.forEach((t) => {
+          const count = Object.values(stockTags).filter((arr) =>
+            arr.includes(t)
+          ).length;
+          const active = activeTagFilters.has(t);
+          const borderColor = active ? "#2d5fc4" : "#2a2a2a";
+          const bg = active ? "#2d5fc4" : "#161616";
+          const color = active ? "#fff" : "#b0b0b0";
+          const dividerColor = active ? "rgba(255,255,255,.3)" : "#2a2a2a";
+          const xColor = active ? "rgba(255,255,255,.7)" : "#6a6a6a";
+          html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;border:1px solid ${borderColor};overflow:hidden;background:${bg}">`;
+          html += `<span style="padding:5px 12px;font-size:13px;color:${color};white-space:nowrap;cursor:${editModeOn ? "default" : "pointer"};display:flex;align-items:center" ${editModeOn ? "" : `onclick="toggleTagFilter('${t}')"`}>${t}</span>`;
+          if (!editModeOn) {
+            const countHoverAttrs = active
+              ? ""
+              : `onmouseover="this.style.background='rgba(255,193,7,.15)';this.style.color='#ffc107'" onmouseout="this.style.background='transparent';this.style.color='${color}'"`;
+            html += `<span style="padding:5px 12px;font-size:13px;color:${color};cursor:pointer;white-space:nowrap;border-left:1px solid ${dividerColor};transition:all .15s" onclick="toggleTagFilter('${t}')" ${countHoverAttrs}>${count}</span>`;
+          }
+          if (editModeOn) {
+            html += `<span onclick="renameTag('${t}')" title="Rename tag" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${xColor};cursor:pointer;transition:all .15s" onmouseover="this.style.color='#5b8def';this.style.background='rgba(91,141,239,.15)'" onmouseout="this.style.color='${xColor}';this.style.background='transparent'"><span style="font-size:13px;line-height:0;position:relative;top:0px">✎</span></span>`;
+            const xHoverAttrs = active
+              ? ""
+              : `onmouseover="this.style.color='#f44336';this.style.background='rgba(244,67,54,.15)'" onmouseout="this.style.color='${xColor}';this.style.background='transparent'"`;
+            html += `<span onclick="deleteTag('${t}')" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${xColor};cursor:pointer;transition:all .15s" ${xHoverAttrs}><span style="font-size:19px;line-height:0;position:relative;top:-1px">×</span></span>`;
+          }
+          html += `</span>`;
+        });
+        html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;overflow:hidden;border:1px solid #2a2a2a">`;
+        html += `<span class="chip add-tag-chip grouped-chip" style="border:none;border-radius:0" onclick="openAddTagModal()"><span style="font-size:22px;line-height:0;position:relative;top:-2px">+</span><span>Add Tag</span></span>`;
+        html += `<span class="chip edit-toggle-chip grouped-chip ${editModeOn ? "active" : ""}" style="border:none;border-left:1px solid #2a2a2a;border-radius:0" onclick="toggleEditMode()" title="Toggle edit mode"><span style="font-size:13px;line-height:0;position:relative;top:-1px">✎</span><span>Edit</span></span>`;
+        html += `</span>`;
+        row.innerHTML = html;
+      }
+
+      function toggleEditMode() {
+        editModeOn = !editModeOn;
+        renderTagFilterRow();
+      }
+
+      function toggleTagFilter(t) {
+        activeTagFilters.has(t)
+          ? activeTagFilters.delete(t)
+          : activeTagFilters.add(t);
+        autoTagFilters.delete(t);
+        const searchEl = document.getElementById("search");
+        if (searchEl) searchEl.value = "";
+        renderTagFilterRow();
+        renderTable();
+        focusSearch();
+      }
+
       // ── Table ─────────────────────────────────────────
       const COLS = [
         {
           k: "tradingsymbol",
-          l: "Symbol",
+          l: "Instrument",
           str: true,
           fmt: (v) => `<span class="sym">${v}</span>`
         },
-        { k: "quantity", l: "Qty", num: true, fmt: (v) => v },
-        { k: "average_price", l: "Avg Price", num: true, fmt: (v) => fc(v) },
+        { k: "quantity", l: "Qty.", num: true, fmt: (v) => v },
+        { k: "average_price", l: "Avg. cost", num: true, fmt: (v) => fc(v) },
+        { k: "_inv", l: "Invested", num: true, fmt: (v) => fi(v) },
         {
           k: "last_price",
           l: "LTP",
@@ -547,8 +775,13 @@
           fmt: (v, r) =>
             `<span class="${r.day_change >= 0 ? "pos" : "neg"}">${fc(v)}</span>`
         },
-        { k: "_inv", l: "Invested", num: true, fmt: (v) => fi(v) },
-        { k: "_cur", l: "Current", num: true, fmt: (v) => fi(v) },
+        {
+          k: "day_change",
+          l: "Day chg.",
+          num: true,
+          fmt: (v, r) =>
+            `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${r.day_change_percentage.toFixed(2)}%</span>`
+        },
         {
           k: "pnl",
           l: "P&L",
@@ -558,17 +791,10 @@
         },
         {
           k: "_ret",
-          l: "Return %",
+          l: "Net chg.",
           num: true,
           fmt: (v) =>
-            `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${v.toFixed(2)}%</span>`
-        },
-        {
-          k: "day_change",
-          l: "Day Chg",
-          num: true,
-          fmt: (v, r) =>
-            `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${v.toFixed(2)} (${r.day_change_percentage.toFixed(2)}%)</span>`
+            `<span class="${v >= 0 ? "pos" : "neg"}">${Math.abs(v).toFixed(2)}%</span>`
         }
       ];
 
@@ -584,33 +810,89 @@
         renderTable();
       }
 
+      function sortVal(row, key) {
+        if (key === "_ret") return Math.abs(row[key]);
+        return row[key];
+      }
+
       function renderTable() {
-        const q = (document.getElementById("search") || {}).value || "";
-        const ql = q.toLowerCase().trim();
-        let data = H.filter(
-          (h) =>
-            !ql ||
-            h.tradingsymbol.toLowerCase().includes(ql) ||
-            h.name.toLowerCase().includes(ql) ||
-            h.sector.toLowerCase().includes(ql)
-        );
+        const rawQ =
+          (document.getElementById("search") || {}).value
+            ?.toLowerCase()
+            .trim() || "";
+        const queries = rawQ
+          .split(",")
+          .map((s) => s.replace(/\s+/g, ""))
+          .filter(Boolean);
+
+        // Auto-select tag filters whose name starts with any comma-separated query term
+        const matchedTags = queries.length
+          ? new Set(
+              globalTags.filter((t) =>
+                queries.some((q) =>
+                  t.toLowerCase().replace(/\s+/g, "").startsWith(q)
+                )
+              )
+            )
+          : new Set();
+        let filtersChanged = false;
+
+        // Remove previously auto-added tags that no longer match
+        autoTagFilters.forEach((t) => {
+          if (!matchedTags.has(t)) {
+            activeTagFilters.delete(t);
+            autoTagFilters.delete(t);
+            filtersChanged = true;
+          }
+        });
+        // Add newly matched tags
+        matchedTags.forEach((t) => {
+          if (!activeTagFilters.has(t)) {
+            activeTagFilters.add(t);
+            autoTagFilters.add(t);
+            filtersChanged = true;
+          } else if (!autoTagFilters.has(t)) {
+            autoTagFilters.add(t);
+          }
+        });
+
+        if (filtersChanged) renderTagFilterRow();
+
+        let data = H.filter((h) => {
+          if (queries.length) {
+            const symLower = h.tradingsymbol.toLowerCase().replace(/\s+/g, "");
+            const tags = stockTags[h.tradingsymbol] || [];
+            const symMatch = queries.some((q) => symLower.startsWith(q));
+            const tagMatch = tags.some((t) =>
+              queries.some((q) =>
+                t.toLowerCase().replace(/\s+/g, "").startsWith(q)
+              )
+            );
+            if (!symMatch && !tagMatch) return false;
+          }
+          if (activeTagFilters.size) {
+            const t = stockTags[h.tradingsymbol] || [];
+            if (![...activeTagFilters].some((f) => t.includes(f))) return false;
+          }
+          return true;
+        });
         if (sCol && sDir !== 0) {
           const col = COLS.find((c) => c.k === sCol);
           data = [...data].sort(
             (a, b) =>
               sDir *
-              (col.str
+              (col?.str
                 ? a[sCol] < b[sCol]
                   ? -1
                   : a[sCol] > b[sCol]
                     ? 1
                     : 0
-                : a[sCol] - b[sCol])
+                : sortVal(a, sCol) - sortVal(b, sCol))
           );
         }
         const icon = (k) =>
           sCol !== k
-            ? '<span class="si">⇅</span>'
+            ? '<span class="si"></span>'
             : sDir === 1
               ? '<span class="si">▲</span>'
               : '<span class="si">▼</span>';
@@ -622,17 +904,196 @@
               `<th class="${cls(c.k)}" onclick="cycleSort('${c.k}')">${c.l}${icon(c.k)}</th>`
           ).join("") +
           "</tr>";
-        document.getElementById("rc").textContent =
-          `${data.length} of ${H.length} holdings`;
         document.getElementById("tb").innerHTML = data
           .map(
             (h) =>
-              "<tr>" +
+              `<tr onclick="openAssignModal('${h.tradingsymbol}')">` +
               COLS.map((c) => `<td>${c.fmt(h[c.k], h)}</td>`).join("") +
-              "</tr>"
+              `</tr>`
           )
           .join("");
       }
+
+      // ── Assign tags modal ─────────────────────────────
+      function openAssignModal(symbol) {
+        editingSymbol = symbol;
+        document.getElementById("assign-modal-title").textContent = symbol;
+        renderAssignPills();
+        document.getElementById("assign-modal").classList.add("open");
+      }
+
+      function renderAssignPills() {
+        const container = document.getElementById("assign-tag-pills");
+        const assigned = stockTags[editingSymbol] || [];
+        const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
+        if (!sorted.length) {
+          container.innerHTML =
+            '<span style="color:#6a6a6a;font-size:13px">No tags available</span>';
+          return;
+        }
+        container.innerHTML = sorted
+          .map((t) => {
+            const sel = assigned.includes(t);
+            return `<button class="tag-pill-toggle ${sel ? "selected" : ""}" onclick="toggleStockTag('${t}')">${t}</button>`;
+          })
+          .join("");
+      }
+
+      function toggleStockTag(tag) {
+        if (!stockTags[editingSymbol]) stockTags[editingSymbol] = [];
+        const arr = stockTags[editingSymbol];
+        const idx = arr.indexOf(tag);
+        if (idx >= 0) arr.splice(idx, 1);
+        else arr.push(tag);
+        save();
+        renderAssignPills();
+        renderTagFilterRow();
+        renderTable();
+      }
+
+      let renamingTag = null;
+
+      function renameTag(tag) {
+        renamingTag = tag;
+        const inp = document.getElementById("rename-tag-input");
+        inp.value = tag;
+        document.getElementById("renametag-modal").classList.add("open");
+        setTimeout(() => {
+          inp.focus();
+          inp.select();
+        }, 50);
+      }
+
+      function confirmRenameTag() {
+        const inp = document.getElementById("rename-tag-input");
+        const newName = inp.value.trim();
+        if (!newName || newName === renamingTag) {
+          closeRenameTagModal();
+          return;
+        }
+        if (globalTags.includes(newName)) {
+          alert("A tag with this name already exists.");
+          return;
+        }
+        globalTags = globalTags.map((t) => (t === renamingTag ? newName : t));
+        Object.keys(stockTags).forEach((sym) => {
+          stockTags[sym] = stockTags[sym].map((t) =>
+            t === renamingTag ? newName : t
+          );
+        });
+        if (activeTagFilters.has(renamingTag)) {
+          activeTagFilters.delete(renamingTag);
+          activeTagFilters.add(newName);
+        }
+        save();
+        renderTagFilterRow();
+        renderTable();
+        closeRenameTagModal();
+      }
+
+      function closeRenameTagModal() {
+        document.getElementById("renametag-modal").classList.remove("open");
+        renamingTag = null;
+        focusSearch();
+      }
+
+      document
+        .getElementById("renametag-modal")
+        .addEventListener("click", (e) => {
+          if (e.target === document.getElementById("renametag-modal"))
+            closeRenameTagModal();
+        });
+
+      function deleteTag(tag) {
+        if (!confirm(`Delete tag "${tag}"?`)) return;
+        globalTags = globalTags.filter((t) => t !== tag);
+        Object.keys(stockTags).forEach((sym) => {
+          stockTags[sym] = stockTags[sym].filter((t) => t !== tag);
+        });
+        activeTagFilters.delete(tag);
+        save();
+        renderAssignPills();
+        renderTagFilterRow();
+        renderTable();
+      }
+
+      function closeAssignModal() {
+        document.getElementById("assign-modal").classList.remove("open");
+        editingSymbol = null;
+        focusSearch();
+      }
+
+      document.getElementById("assign-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("assign-modal"))
+          closeAssignModal();
+      });
+
+      // ── Add tag modal ─────────────────────────────────
+      function openAddTagModal() {
+        document.getElementById("new-tag-input").value = "";
+        document.getElementById("addtag-modal").classList.add("open");
+        setTimeout(() => document.getElementById("new-tag-input").focus(), 50);
+      }
+
+      function createTag() {
+        const inp = document.getElementById("new-tag-input");
+        const val = inp.value.trim();
+        if (!val || globalTags.includes(val)) {
+          inp.value = "";
+          return;
+        }
+        globalTags.push(val);
+        save();
+        inp.value = "";
+        renderTagFilterRow();
+        closeAddTagModal();
+      }
+
+      function closeAddTagModal() {
+        document.getElementById("addtag-modal").classList.remove("open");
+        focusSearch();
+      }
+
+      document.getElementById("addtag-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("addtag-modal"))
+          closeAddTagModal();
+      });
+
+      // ── Keep focus on search input ────────────────────
+      function isAnyModalOpen() {
+        return (
+          document.getElementById("assign-modal").classList.contains("open") ||
+          document.getElementById("addtag-modal").classList.contains("open") ||
+          document.getElementById("renametag-modal").classList.contains("open")
+        );
+      }
+      function focusSearch() {
+        if (isAnyModalOpen()) return;
+        const sel = window.getSelection();
+        if (sel && sel.toString().length > 0) return;
+        const el = document.getElementById("search");
+        if (el && document.activeElement !== el) el.focus();
+      }
+      document.addEventListener("click", (e) => {
+        const inAnyModal = e.target.closest(".modal-overlay");
+        const isInteractive = e.target.closest(
+          "button, .chip, .tag-pill-toggle, input, span[onclick]"
+        );
+        if (!inAnyModal && !isInteractive) {
+          focusSearch();
+        }
+        if (editModeOn) {
+          const isEditAction = e.target.closest(
+            '[onclick^="renameTag"], [onclick^="deleteTag"], [onclick^="toggleEditMode"]'
+          );
+          const isTagPill = e.target.closest("#tag-filters span");
+          if (!isEditAction && !inAnyModal && !isTagPill) {
+            editModeOn = false;
+            renderTagFilterRow();
+          }
+        }
+      });
+      focusSearch();
     </script>
   </body>
 </html>
