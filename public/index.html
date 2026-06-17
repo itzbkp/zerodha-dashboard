@@ -612,12 +612,18 @@
       let editingSymbol = null;
       let editModeOn = false;
 
-      let globalTags = JSON.parse(localStorage.getItem("zd_tags") || "[]");
-      let stockTags = JSON.parse(localStorage.getItem("zd_stocktags") || "{}");
+      let globalTags = [];
+      let stockTags = {};
 
-      function save() {
-        localStorage.setItem("zd_tags", JSON.stringify(globalTags));
-        localStorage.setItem("zd_stocktags", JSON.stringify(stockTags));
+      async function loadTagsFromServer() {
+        try {
+          const res = await fetch("/api/tags");
+          const data = await res.json();
+          globalTags = (data.tags || []).map((t) => t.name);
+          stockTags = data.stockTags || {};
+        } catch (e) {
+          console.log("Failed to load tags from server", e);
+        }
       }
 
       let lastTagFilterSignature = "";
@@ -701,7 +707,11 @@
       })();
 
       refreshTimer = setInterval(fetchHoldings, 5000);
-      fetchHoldings();
+      (async function init() {
+        await loadTagsFromServer();
+        renderTagFilterRow();
+        fetchHoldings();
+      })();
 
       // ── Formatting ────────────────────────────────────
       function fmtVal(n) {
@@ -998,13 +1008,29 @@
           .join("");
       }
 
-      function toggleStockTag(tag) {
-        if (!stockTags[editingSymbol]) stockTags[editingSymbol] = [];
-        const arr = stockTags[editingSymbol];
-        const idx = arr.indexOf(tag);
-        if (idx >= 0) arr.splice(idx, 1);
-        else arr.push(tag);
-        save();
+      async function toggleStockTag(tag) {
+        const assigned = stockTags[editingSymbol] || [];
+        const isAssigned = assigned.includes(tag);
+        try {
+          if (isAssigned) {
+            await fetch("/api/stock-tags", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ symbol: editingSymbol, tag })
+            });
+            stockTags[editingSymbol] = assigned.filter((t) => t !== tag);
+          } else {
+            await fetch("/api/stock-tags", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ symbol: editingSymbol, tag })
+            });
+            if (!stockTags[editingSymbol]) stockTags[editingSymbol] = [];
+            stockTags[editingSymbol].push(tag);
+          }
+        } catch (e) {
+          console.log("Failed to update stock tag", e);
+        }
         renderAssignPills();
         renderTagFilterRow();
         renderTable();
@@ -1023,7 +1049,7 @@
         }, 50);
       }
 
-      function confirmRenameTag() {
+      async function confirmRenameTag() {
         const inp = document.getElementById("rename-tag-input");
         const newName = inp.value.trim();
         if (!newName || newName === renamingTag) {
@@ -1032,6 +1058,24 @@
         }
         if (globalTags.includes(newName)) {
           alert("A tag with this name already exists.");
+          return;
+        }
+        try {
+          const res = await fetch(
+            "/api/tags/" + encodeURIComponent(renamingTag),
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ newName })
+            }
+          );
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.message || "Failed to rename tag");
+            return;
+          }
+        } catch (e) {
+          console.log("Failed to rename tag", e);
           return;
         }
         globalTags = globalTags.map((t) => (t === renamingTag ? newName : t));
@@ -1044,7 +1088,6 @@
           activeTagFilters.delete(renamingTag);
           activeTagFilters.add(newName);
         }
-        save();
         renderTagFilterRow();
         renderTable();
         closeRenameTagModal();
@@ -1063,14 +1106,20 @@
             closeRenameTagModal();
         });
 
-      function deleteTag(tag) {
+      async function deleteTag(tag) {
         if (!confirm(`Delete tag "${tag}"?`)) return;
+        try {
+          await fetch("/api/tags/" + encodeURIComponent(tag), {
+            method: "DELETE"
+          });
+        } catch (e) {
+          console.log("Failed to delete tag", e);
+        }
         globalTags = globalTags.filter((t) => t !== tag);
         Object.keys(stockTags).forEach((sym) => {
           stockTags[sym] = stockTags[sym].filter((t) => t !== tag);
         });
         activeTagFilters.delete(tag);
-        save();
         renderAssignPills();
         renderTagFilterRow();
         renderTable();
@@ -1094,15 +1143,29 @@
         setTimeout(() => document.getElementById("new-tag-input").focus(), 50);
       }
 
-      function createTag() {
+      async function createTag() {
         const inp = document.getElementById("new-tag-input");
         const val = inp.value.trim();
         if (!val || globalTags.includes(val)) {
           inp.value = "";
           return;
         }
+        try {
+          const res = await fetch("/api/tags", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: val })
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.message || "Failed to create tag");
+            return;
+          }
+        } catch (e) {
+          console.log("Failed to create tag", e);
+          return;
+        }
         globalTags.push(val);
-        save();
         inp.value = "";
         renderTagFilterRow();
         closeAddTagModal();
