@@ -227,6 +227,7 @@
       }
       .chip.edit-toggle-chip {
         color: #b0b0b0;
+        transition: color 0.15s;
       }
       .chip.edit-toggle-chip:hover {
         color: #5b8def;
@@ -603,10 +604,13 @@
     </div>
 
     <script>
+      const BASE_URL = "https://itzbkp-zerodha-dashboard.vercel.app";
+
       let H = [],
         refreshTimer = null,
         sCol = null,
         sDir = 0;
+      let cleanupDone = false;
       let activeTagFilters = new Set();
       let autoTagFilters = new Set(); // tags activated automatically via search match
       let editingSymbol = null;
@@ -617,13 +621,23 @@
 
       async function loadTagsFromServer() {
         try {
-          const res = await fetch("/api/tags");
+          const res = await fetch(BASE_URL + "/api/tags");
           const data = await res.json();
           globalTags = (data.tags || []).map((t) => t.name);
           stockTags = data.stockTags || {};
-        } catch (e) {
-          console.log("Failed to load tags from server", e);
-        }
+        } catch (e) {}
+      }
+
+      async function runCleanup() {
+        try {
+          const symbols = H.map((h) => h.tradingsymbol);
+          if (!symbols.length) return;
+          await fetch(BASE_URL + "/api/cleanup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbols })
+          });
+        } catch (e) {}
       }
 
       let lastTagFilterSignature = "";
@@ -648,9 +662,7 @@
       // ── Kite API ──────────────────────────────────────
       async function fetchHoldings() {
         try {
-          const res = await fetch(
-            "https://itzbkp-zerodha-dashboard.vercel.app/portfolio/holdings"
-          );
+          const res = await fetch(BASE_URL + "/portfolio/holdings");
           const json = await res.json();
           if (json.status === "Login-Required") {
             setStatus(false);
@@ -672,6 +684,10 @@
           renderSummary();
           if (tagFilterRowSignatureChanged()) renderTagFilterRow();
           renderTable();
+          if (!cleanupDone) {
+            cleanupDone = true;
+            runCleanup();
+          }
         } catch (e) {
           setStatus(false);
         }
@@ -771,7 +787,11 @@
           const dividerColor = active ? "rgba(255,255,255,.3)" : "#2a2a2a";
           const xColor = active ? "rgba(255,255,255,.7)" : "#6a6a6a";
           html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;border:1px solid ${borderColor};overflow:hidden;background:${bg}">`;
-          html += `<span style="padding:5px 12px;font-size:13px;color:${color};white-space:nowrap;cursor:${editModeOn ? "default" : "pointer"};display:flex;align-items:center" ${editModeOn ? "" : `onclick="toggleTagFilter('${t}')"`}>${t}</span>`;
+          const nameHoverAttrs =
+            !editModeOn && !active
+              ? `onmouseover="this.style.color='#5b8def'" onmouseout="this.style.color='${color}'"`
+              : "";
+          html += `<span style="padding:5px 12px;font-size:13px;color:${color};white-space:nowrap;cursor:${editModeOn ? "default" : "pointer"};display:flex;align-items:center;transition:color .15s" ${editModeOn ? "" : `onclick="toggleTagFilter('${t}')"`} ${nameHoverAttrs}>${t}</span>`;
           if (!editModeOn) {
             const countHoverAttrs = active
               ? ""
@@ -1013,14 +1033,14 @@
         const isAssigned = assigned.includes(tag);
         try {
           if (isAssigned) {
-            await fetch("/api/stock-tags", {
+            await fetch(BASE_URL + "/api/stock-tags", {
               method: "DELETE",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ symbol: editingSymbol, tag })
             });
             stockTags[editingSymbol] = assigned.filter((t) => t !== tag);
           } else {
-            await fetch("/api/stock-tags", {
+            await fetch(BASE_URL + "/api/stock-tags", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ symbol: editingSymbol, tag })
@@ -1028,9 +1048,7 @@
             if (!stockTags[editingSymbol]) stockTags[editingSymbol] = [];
             stockTags[editingSymbol].push(tag);
           }
-        } catch (e) {
-          console.log("Failed to update stock tag", e);
-        }
+        } catch (e) {}
         renderAssignPills();
         renderTagFilterRow();
         renderTable();
@@ -1062,7 +1080,7 @@
         }
         try {
           const res = await fetch(
-            "/api/tags/" + encodeURIComponent(renamingTag),
+            BASE_URL + "/api/tags/" + encodeURIComponent(renamingTag),
             {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
@@ -1075,7 +1093,6 @@
             return;
           }
         } catch (e) {
-          console.log("Failed to rename tag", e);
           return;
         }
         globalTags = globalTags.map((t) => (t === renamingTag ? newName : t));
@@ -1109,12 +1126,10 @@
       async function deleteTag(tag) {
         if (!confirm(`Delete tag "${tag}"?`)) return;
         try {
-          await fetch("/api/tags/" + encodeURIComponent(tag), {
+          await fetch(BASE_URL + "/api/tags/" + encodeURIComponent(tag), {
             method: "DELETE"
           });
-        } catch (e) {
-          console.log("Failed to delete tag", e);
-        }
+        } catch (e) {}
         globalTags = globalTags.filter((t) => t !== tag);
         Object.keys(stockTags).forEach((sym) => {
           stockTags[sym] = stockTags[sym].filter((t) => t !== tag);
@@ -1151,7 +1166,7 @@
           return;
         }
         try {
-          const res = await fetch("/api/tags", {
+          const res = await fetch(BASE_URL + "/api/tags", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: val })
@@ -1162,7 +1177,6 @@
             return;
           }
         } catch (e) {
-          console.log("Failed to create tag", e);
           return;
         }
         globalTags.push(val);

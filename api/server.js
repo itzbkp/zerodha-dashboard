@@ -275,6 +275,29 @@ async function handleUnassignStockTag(req, res) {
   }
 }
 
+// POST /api/cleanup { symbols: [...] } -> remove stock_tags rows for symbols not in the given list
+async function handleCleanup(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const symbols = Array.isArray(body.symbols) ? body.symbols.filter(Boolean) : [];
+    if (symbols.length === 0) {
+      return sendJson(res, 400, { status: "error", message: "symbols array required" });
+    }
+
+    const deleted = await sql`
+      DELETE FROM stock_tags
+      WHERE symbol <> ALL(${symbols})
+      RETURNING symbol
+    `;
+
+    sendJson(res, 200, { status: "ok", removedCount: deleted.length, removedSymbols: deleted.map(r => r.symbol) });
+  } catch (err) {
+    console.log("\n❌ POST /api/cleanup ERROR:");
+    console.log(err);
+    sendJson(res, 500, { status: "error", message: err.message });
+  }
+}
+
 // Create HTTP server
 const server = http.createServer((req, res) => {
 
@@ -328,6 +351,10 @@ const server = http.createServer((req, res) => {
 
   if (tagPathname === "/api/stock-tags" && req.method === "DELETE") {
     return handleUnassignStockTag(req, res);
+  }
+
+  if (tagPathname === "/api/cleanup" && req.method === "POST") {
+    return handleCleanup(req, res);
   }
 
   // Static routes
