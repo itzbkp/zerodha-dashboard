@@ -604,12 +604,10 @@
     </div>
 
     <script>
-      const BASE_URL = "https://itzbkp-zerodha-dashboard.vercel.app";
-
       let H = [],
         refreshTimer = null,
-        sCol = null,
-        sDir = 0;
+        sCol = "day_change",
+        sDir = -1;
       let cleanupDone = false;
       let activeTagFilters = new Set();
       let autoTagFilters = new Set(); // tags activated automatically via search match
@@ -621,7 +619,7 @@
 
       async function loadTagsFromServer() {
         try {
-          const res = await fetch(BASE_URL + "/api/tags");
+          const res = await fetch("/api/tags");
           const data = await res.json();
           globalTags = (data.tags || []).map((t) => t.name);
           stockTags = data.stockTags || {};
@@ -632,7 +630,7 @@
         try {
           const symbols = H.map((h) => h.tradingsymbol);
           if (!symbols.length) return;
-          await fetch(BASE_URL + "/api/cleanup", {
+          await fetch("/api/cleanup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ symbols })
@@ -662,15 +660,11 @@
       // ── Kite API ──────────────────────────────────────
       async function fetchHoldings() {
         try {
-          const res = await fetch(BASE_URL + "/portfolio/holdings");
+          const res = await fetch("/portfolio/holdings");
           const json = await res.json();
           if (json.status === "Login-Required") {
             setStatus(false);
-            const t = window.open("/login", "_blank");
-            setTimeout(() => {
-              t.close();
-              fetchHoldings();
-            }, 2000);
+            window.location.href = "/login";
             return;
           }
           const raw = json.data || [];
@@ -724,9 +718,9 @@
 
       refreshTimer = setInterval(fetchHoldings, 5000);
       (async function init() {
+        fetchHoldings();
         await loadTagsFromServer();
         renderTagFilterRow();
-        fetchHoldings();
       })();
 
       // ── Formatting ────────────────────────────────────
@@ -754,7 +748,7 @@
           tp += h.pnl;
         });
         const pp = (tp / ti) * 100,
-          dcPct = (tdc / ti) * 100;
+          dcPct = (tdc / (tc - tdc)) * 100;
         document.getElementById("inv").innerHTML = fmtVal(ti);
         document.getElementById("cur").innerHTML = fmtVal(tc);
         const tdcEl = document.getElementById("tdc");
@@ -772,6 +766,20 @@
       }
 
       // ── Tag filter row ────────────────────────────────
+      function tagColorStyle(t) {
+        const symbols = Object.keys(stockTags).filter((sym) =>
+          (stockTags[sym] || []).includes(t)
+        );
+        const stocks = H.filter((h) => symbols.includes(h.tradingsymbol));
+        if (!stocks.length) return { bg: "#161616" };
+        const gainers = stocks.filter((h) => h.day_change >= 0).length;
+        const ratio = gainers / stocks.length; // 1 = all gainers, 0 = all losers
+        const alpha = 0.1 + Math.abs(ratio - 0.5) * 0.3;
+        if (ratio > 0.5) return { bg: `rgba(76,175,80,${alpha})` };
+        if (ratio < 0.5) return { bg: `rgba(244,67,54,${alpha})` };
+        return { bg: "#161616" };
+      }
+
       function renderTagFilterRow() {
         const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
         const row = document.getElementById("tag-filters");
@@ -781,8 +789,9 @@
             arr.includes(t)
           ).length;
           const active = activeTagFilters.has(t);
+          const colorStyle = tagColorStyle(t);
           const borderColor = active ? "#2d5fc4" : "#2a2a2a";
-          const bg = active ? "#2d5fc4" : "#161616";
+          const bg = active ? "#2d5fc4" : colorStyle.bg;
           const color = active ? "#fff" : "#b0b0b0";
           const dividerColor = active ? "rgba(255,255,255,.3)" : "#2a2a2a";
           const xColor = active ? "rgba(255,255,255,.7)" : "#6a6a6a";
@@ -861,13 +870,6 @@
             `<span class="${r.day_change >= 0 ? "pos" : "neg"}">${fc(v)}</span>`
         },
         {
-          k: "day_change",
-          l: "Day chg.",
-          num: true,
-          fmt: (v, r) =>
-            `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${r.day_change_percentage.toFixed(2)}%</span>`
-        },
-        {
           k: "pnl",
           l: "P&L",
           num: true,
@@ -880,6 +882,13 @@
           num: true,
           fmt: (v) =>
             `<span class="${v >= 0 ? "pos" : "neg"}">${Math.abs(v).toFixed(2)}%</span>`
+        },
+        {
+          k: "day_change",
+          l: "Day chg.",
+          num: true,
+          fmt: (v, r) =>
+            `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${r.day_change_percentage.toFixed(2)}%</span>`
         }
       ];
 
@@ -1033,14 +1042,14 @@
         const isAssigned = assigned.includes(tag);
         try {
           if (isAssigned) {
-            await fetch(BASE_URL + "/api/stock-tags", {
+            await fetch("/api/stock-tags", {
               method: "DELETE",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ symbol: editingSymbol, tag })
             });
             stockTags[editingSymbol] = assigned.filter((t) => t !== tag);
           } else {
-            await fetch(BASE_URL + "/api/stock-tags", {
+            await fetch("/api/stock-tags", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ symbol: editingSymbol, tag })
@@ -1080,7 +1089,7 @@
         }
         try {
           const res = await fetch(
-            BASE_URL + "/api/tags/" + encodeURIComponent(renamingTag),
+            "/api/tags/" + encodeURIComponent(renamingTag),
             {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
@@ -1126,7 +1135,7 @@
       async function deleteTag(tag) {
         if (!confirm(`Delete tag "${tag}"?`)) return;
         try {
-          await fetch(BASE_URL + "/api/tags/" + encodeURIComponent(tag), {
+          await fetch("/api/tags/" + encodeURIComponent(tag), {
             method: "DELETE"
           });
         } catch (e) {}
@@ -1166,7 +1175,7 @@
           return;
         }
         try {
-          const res = await fetch(BASE_URL + "/api/tags", {
+          const res = await fetch("/api/tags", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: val })

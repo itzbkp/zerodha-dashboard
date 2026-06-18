@@ -105,9 +105,6 @@ function generateAccessToken(requestToken, callback) {
           ACCESS_TOKEN =
             parsed.data.access_token;
 
-          console.log("\n✅ ACCESS TOKEN:");
-          console.log(ACCESS_TOKEN);
-
           callback(null, ACCESS_TOKEN);
 
         } else {
@@ -384,8 +381,7 @@ const server = http.createServer((req, res) => {
   // Callback route
   if (req.url.startsWith("/callback")) {
 
-    const parsedUrl =
-      url.parse(req.url, true);
+    const parsedUrl = url.parse(req.url, true);
 
     const requestToken =
       parsedUrl.query.request_token;
@@ -400,9 +396,6 @@ const server = http.createServer((req, res) => {
 
       return;
     }
-
-    console.log("\n✅ REQUEST TOKEN:");
-    console.log(requestToken);
 
     generateAccessToken(
       requestToken,
@@ -422,11 +415,9 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        res.writeHead(200, {
-          "Content-Type": "text/html",
-        });
-
-        res.end("<h2>Login Successful</h2>");
+        res.writeHead(302, {
+          location: "/",
+        }).end();
       }
     );
 
@@ -470,7 +461,7 @@ const server = http.createServer((req, res) => {
     },
   };
 
-  console.log(`➡️ ${req.method} ${req.url}`);
+  console.log(`${req.method} ${req.url}`);
 
   const proxy =
     https.request(options, (kiteRes) => {
@@ -483,7 +474,7 @@ const server = http.createServer((req, res) => {
 
       kiteRes.on("end", () => {
 
-        console.log(`⬅️ ${kiteRes.statusCode}`);
+        console.log(`${kiteRes.statusCode}`);
 
         res.writeHead(
           kiteRes.statusCode,
