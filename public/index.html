@@ -6,11 +6,13 @@
     <title>Zerodha Dashboard</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
+
       body {
         background: #111111;
         color: #d4d4d4;
@@ -19,6 +21,7 @@
         font-variant-numeric: tabular-nums;
       }
 
+      /* ── Header ── */
       .header {
         background: #111111;
         border-bottom: 1px solid #4a4a4a;
@@ -37,12 +40,40 @@
         font-weight: 600;
         color: #e8e8e8;
       }
-      .header-right {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+      .header-search {
+        flex: 1;
+        max-width: 600px;
+        margin: 0 16px;
       }
-      .updated {
+      .search-box {
+        position: relative;
+      }
+      .search-box input {
+        width: 100%;
+        padding: 8px 12px 8px 34px;
+        border: 1px solid #4a4a4a;
+        border-radius: 8px;
+        font-size: 13px;
+        background: #161616;
+        color: #d4d4d4;
+        outline: none;
+        font-family: inherit;
+      }
+      .search-box input::placeholder {
+        color: #6a6a6a;
+      }
+      .search-box input:focus {
+        border-color: #387ed1;
+        box-shadow: 0 0 0 3px rgba(56, 126, 209, 0.15);
+      }
+      .search-box svg {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6a6a6a;
+      }
+      .status-pill {
         font-size: 12px;
         color: #ffffff;
         background: #1a1a1a;
@@ -74,6 +105,7 @@
         }
       }
 
+      /* ── Summary ── */
       .summary {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -133,55 +165,10 @@
         color: #f44336;
       }
 
+      /* ── Table ── */
       .table-container {
         margin: 16px 28px 20px;
       }
-      .toolbar {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      .search-box {
-        flex: 1 1 auto;
-        min-width: 200px;
-        position: relative;
-      }
-      .search-box input {
-        width: 100%;
-        padding: 8px 12px 8px 34px;
-        border: 1px solid #4a4a4a;
-        border-radius: 8px;
-        font-size: 13px;
-        background: #161616;
-        color: #d4d4d4;
-        outline: none;
-        font-family: inherit;
-      }
-      .search-box input::placeholder {
-        color: #6a6a6a;
-      }
-      .search-box input:focus {
-        border-color: #387ed1;
-        box-shadow: 0 0 0 3px rgba(56, 126, 209, 0.15);
-      }
-      .search-box svg {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6a6a6a;
-      }
-      .count-badge {
-        font-size: 12px;
-        color: #6a6a6a;
-        white-space: nowrap;
-        min-width: 110px;
-        text-align: right;
-        flex-shrink: 0;
-      }
-
       .filter-row {
         display: flex;
         gap: 6px;
@@ -190,63 +177,6 @@
         align-items: center;
         min-height: 28px;
       }
-      .filter-label {
-        font-size: 13px;
-        color: #8a8a8a;
-        font-weight: 400;
-        margin-right: 4px;
-      }
-      .chip {
-        font-size: 13px;
-        padding: 6px 14px;
-        border-radius: 20px;
-        border: 1px solid #4a4a4a;
-        background: #161616;
-        color: #b0b0b0;
-        cursor: pointer;
-        transition: all 0.15s;
-        user-select: none;
-      }
-      .chip:hover {
-        border-color: #5b8def;
-        color: #5b8def;
-      }
-      .chip.active {
-        background: #2d5fc4;
-        border-color: #2d5fc4;
-        color: #fff;
-      }
-      .chip.add-tag-chip {
-        border-style: dashed;
-        color: #b0b0b0;
-        border-color: #5a5a5a;
-      }
-      .chip.add-tag-chip:hover {
-        border-color: #5b8def;
-        color: #5b8def;
-      }
-      .chip.edit-toggle-chip {
-        color: #b0b0b0;
-        transition: color 0.15s;
-      }
-      .chip.edit-toggle-chip:hover {
-        color: #5b8def;
-      }
-      .chip.edit-toggle-chip.active {
-        background: #2d5fc4;
-        color: #fff;
-      }
-      .grouped-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 6px 14px;
-        cursor: pointer;
-        user-select: none;
-        font-size: 13px;
-      }
-
       .table-wrap {
         background: #111111;
         border-radius: 12px;
@@ -275,8 +205,6 @@
         font-size: 11px;
         font-weight: 500;
         color: #8a8a8a;
-        text-transform: none;
-        letter-spacing: 0;
         cursor: pointer;
         user-select: none;
         white-space: nowrap;
@@ -320,11 +248,9 @@
       }
       .pos {
         color: #4caf50;
-        font-weight: 400;
       }
       .neg {
         color: #f44336;
-        font-weight: 400;
       }
       .pp {
         color: #4caf50;
@@ -335,6 +261,53 @@
         font-weight: 500;
       }
 
+      /* ── Chips ── */
+      .chip {
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #4a4a4a;
+        background: #161616;
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+      }
+      .chip:hover {
+        border-color: #5b8def;
+        color: #5b8def;
+      }
+      .chip.active {
+        background: #2d5fc4;
+        border-color: #2d5fc4;
+        color: #fff;
+      }
+      .chip.add-tag-chip {
+        border-style: dashed;
+        border-color: #5a5a5a;
+      }
+      .chip.add-tag-chip:hover {
+        border-color: #5b8def;
+        color: #5b8def;
+      }
+      .chip.edit-toggle-chip:hover {
+        color: #5b8def;
+      }
+      .chip.edit-toggle-chip.active {
+        background: #2d5fc4;
+        color: #fff;
+      }
+      .grouped-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 6px 14px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 13px;
+      }
+
+      /* ── Modals ── */
       .modal-overlay {
         display: none;
         position: fixed;
@@ -351,7 +324,7 @@
         background: #161616;
         border: 1px solid #4a4a4a;
         border-radius: 14px;
-        padding: 8px 12px 12px 12px;
+        padding: 8px 12px 12px;
         width: 400px;
         max-width: 95vw;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
@@ -433,7 +406,6 @@
         border: none;
         border-radius: 8px;
         font-size: 13px;
-        font-weight: 400;
         cursor: pointer;
         font-family: inherit;
         white-space: nowrap;
@@ -442,6 +414,39 @@
         background: #244ea0;
       }
 
+      /* ── Toast ── */
+      .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 200;
+      }
+      .toast {
+        background: #1a1a1a;
+        border: 1px solid #f44336;
+        color: #f44336;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        animation: toast-in 0.2s ease-out;
+        max-width: 320px;
+      }
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ── Scrollbar ── */
       ::-webkit-scrollbar {
         height: 6px;
         width: 6px;
@@ -457,6 +462,7 @@
         background: #3a3a3a;
       }
 
+      /* ── Responsive ── */
       @media (max-width: 700px) {
         .summary {
           grid-template-columns: 1fr 1fr;
@@ -477,41 +483,38 @@
           <img src="favicon.ico" alt="Zerodha Logo" width="32" height="32" />
           <h1>Zerodha Dashboard</h1>
         </div>
-        <div
-          class="search-box"
-          style="max-width: 600px; margin: 0 16px; flex: 1"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            id="search"
-            placeholder="Search by symbol or tag"
-            oninput="renderTable()"
-          />
-        </div>
-        <div class="header-right">
-          <div class="updated" id="ts">
-            <span class="status-dot dot-live" id="sdot"></span>Live&nbsp;<span
-              style="
-                font-size: 32px;
-                line-height: 0;
-                vertical-align: middle;
-                position: relative;
-                top: -0.5px;
-              "
-              >·</span
-            >&nbsp;<span id="ts-text"></span>
+        <div class="header-search">
+          <div class="search-box">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              id="search"
+              placeholder="Search by symbol or tag"
+              oninput="renderTable()"
+            />
           </div>
+        </div>
+        <div class="status-pill" id="status-pill">
+          <span class="status-dot dot-live" id="sdot"></span>Live&nbsp;<span
+            style="
+              font-size: 32px;
+              line-height: 0;
+              vertical-align: middle;
+              position: relative;
+              top: -0.5px;
+            "
+            >·</span
+          >&nbsp;<span id="ts-text"></span>
         </div>
       </div>
 
@@ -542,7 +545,6 @@
 
       <div class="table-container">
         <div class="filter-row" id="tag-filters"></div>
-
         <div class="table-wrap">
           <div class="table-scroll">
             <table>
@@ -554,7 +556,7 @@
       </div>
     </div>
 
-    <!-- Assign tags modal (row click) -->
+    <!-- Assign tags modal -->
     <div class="modal-overlay" id="assign-modal">
       <div class="modal">
         <div class="modal-header">
@@ -565,7 +567,7 @@
       </div>
     </div>
 
-    <!-- Add tag modal (filter row) -->
+    <!-- Add tag modal -->
     <div class="modal-overlay" id="addtag-modal">
       <div class="modal">
         <div class="modal-header">
@@ -576,7 +578,7 @@
           <input
             type="text"
             id="new-tag-input"
-            placeholder="Tag name…"
+            placeholder="Tag name"
             onkeydown="if (event.key === 'Enter') createTag();"
           />
           <button class="btn-add" onclick="createTag()">Add</button>
@@ -603,61 +605,77 @@
       </div>
     </div>
 
+    <div class="toast-container" id="toast-container"></div>
+
     <script>
-      let H = [],
-        refreshTimer = null,
-        sCol = "day_change",
+      // ── State ─────────────────────────────────────────
+      let H = [];
+      let sCol = "day_change_percentage",
         sDir = -1;
       let cleanupDone = false;
       let activeTagFilters = new Set();
-      let autoTagFilters = new Set(); // tags activated automatically via search match
+      let autoTagFilters = new Set();
       let editingSymbol = null;
       let editModeOn = false;
-
       let globalTags = [];
       let stockTags = {};
 
-      async function loadTagsFromServer() {
+      // ── localStorage cache ────────────────────────────
+      // "tags"       → string[]              (mirrors `tags` table)
+      // "stock_tags" → { symbol: string[] }  (mirrors `stock_tags` table)
+      function loadTagsFromCache() {
         try {
-          const res = await fetch("/api/tags");
-          const data = await res.json();
-          globalTags = (data.tags || []).map((t) => t.name);
-          stockTags = data.stockTags || {};
-        } catch (e) {}
-      }
-
-      async function runCleanup() {
-        try {
-          const symbols = H.map((h) => h.tradingsymbol);
-          if (!symbols.length) return;
-          await fetch("/api/cleanup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ symbols })
-          });
-        } catch (e) {}
-      }
-
-      let lastTagFilterSignature = "";
-      function tagFilterRowSignatureChanged() {
-        const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
-        const sig = JSON.stringify({
-          tags: sorted,
-          counts: sorted.map(
-            (t) =>
-              Object.values(stockTags).filter((arr) => arr.includes(t)).length
-          ),
-          active: [...activeTagFilters].sort(),
-          editMode: editModeOn
-        });
-        if (sig !== lastTagFilterSignature) {
-          lastTagFilterSignature = sig;
+          const rawTags = localStorage.getItem("tags");
+          const rawStockTags = localStorage.getItem("stock_tags");
+          if (!rawTags && !rawStockTags) return false;
+          globalTags = rawTags ? JSON.parse(rawTags) : [];
+          stockTags = rawStockTags ? JSON.parse(rawStockTags) : {};
           return true;
+        } catch (e) {
+          return false;
         }
-        return false;
+      }
+      function persistTagsCache() {
+        localStorage.setItem("tags", JSON.stringify(globalTags));
+        localStorage.setItem("stock_tags", JSON.stringify(stockTags));
       }
 
-      // ── Kite API ──────────────────────────────────────
+      // ── Toast ─────────────────────────────────────────
+      function showToast(message) {
+        const el = document.createElement("div");
+        el.className = "toast";
+        el.textContent = message;
+        document.getElementById("toast-container").appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+      }
+
+      // ── Formatting ────────────────────────────────────
+      function fmtVal(n) {
+        const [int, dec] = Math.abs(n).toFixed(2).split(".");
+        return `<span>${Number(int).toLocaleString("en-IN")}</span><span class="dec">.${dec}</span>`;
+      }
+      const fc = (n) =>
+        Math.abs(n).toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      const fi = (n) => Math.round(Math.abs(n)).toLocaleString("en-IN");
+
+      // ── Status / clock ────────────────────────────────
+      function setStatus(ok) {
+        const d = new Date();
+        const h = d.getHours() % 12 || 12;
+        const m = String(d.getMinutes()).padStart(2, "0");
+        const s = String(d.getSeconds()).padStart(2, "0");
+        const ap = d.getHours() >= 12 ? "PM" : "AM";
+        const ts = `${String(h).padStart(2, "0")}:${m}:${s} ${ap}`;
+        const pill = document.getElementById("status-pill");
+        if (pill) {
+          pill.innerHTML = `<span class="status-dot ${ok ? "dot-live" : "dot-err"}" id="sdot"></span>${ok ? "Live" : "Error"}&nbsp;<span style="font-size:32px;line-height:0;vertical-align:middle;position:relative;top:-0.5px">·</span>&nbsp;<span id="ts-text">${ts}</span>`;
+        }
+      }
+
+      // ── API: Holdings ─────────────────────────────────
       async function fetchHoldings() {
         try {
           const res = await fetch("/portfolio/holdings");
@@ -676,7 +694,7 @@
           }));
           setStatus(true);
           renderSummary();
-          if (tagFilterRowSignatureChanged()) renderTagFilterRow();
+          renderTagFilterRow();
           renderTable();
           if (!cleanupDone) {
             cleanupDone = true;
@@ -687,55 +705,31 @@
         }
       }
 
-      function setStatus(ok) {
-        const dot = document.getElementById("sdot");
-        if (dot) dot.className = "status-dot " + (ok ? "dot-live" : "dot-err");
-        const d = new Date(),
-          h = d.getHours() % 12 || 12,
-          m = d.getMinutes(),
-          s = d.getSeconds(),
-          ap = d.getHours() >= 12 ? "PM" : "AM";
-        const ts = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")} ${ap}`;
-        const tsText = document.getElementById("ts-text");
-        if (tsText) tsText.textContent = ts;
-        const updatedEl = document.querySelector(".updated");
-        if (updatedEl) {
-          updatedEl.innerHTML = `<span class="status-dot ${ok ? "dot-live" : "dot-err"}" id="sdot"></span>${ok ? "Live" : "Error"}&nbsp;<span style="font-size:32px;line-height:0;vertical-align:middle;position:relative;top:-0.5px">·</span>&nbsp;<span id="ts-text">${ts}</span>`;
-        }
+      // ── API: Tags (GET) ───────────────────────────────
+      async function loadTagsFromServer() {
+        try {
+          const res = await fetch("/api/tags");
+          const data = await res.json();
+          globalTags = (data.tags || []).map((t) => t.name);
+          stockTags = data.stockTags || {};
+          persistTagsCache();
+        } catch (e) {}
       }
 
-      // Show current time immediately on load, before first fetch completes
-      (function initialTime() {
-        const d = new Date(),
-          h = d.getHours() % 12 || 12,
-          m = d.getMinutes(),
-          s = d.getSeconds(),
-          ap = d.getHours() >= 12 ? "PM" : "AM";
-        const ts = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")} ${ap}`;
-        const tsText = document.getElementById("ts-text");
-        if (tsText) tsText.textContent = ts;
-      })();
-
-      refreshTimer = setInterval(fetchHoldings, 5000);
-      (async function init() {
-        fetchHoldings();
-        await loadTagsFromServer();
-        renderTagFilterRow();
-      })();
-
-      // ── Formatting ────────────────────────────────────
-      function fmtVal(n) {
-        const s = Math.abs(n).toFixed(2).split(".");
-        return `<span>${Number(s[0]).toLocaleString("en-IN")}</span><span class="dec">.${s[1]}</span>`;
+      // ── API: Cleanup ──────────────────────────────────
+      async function runCleanup() {
+        try {
+          const symbols = H.map((h) => h.tradingsymbol);
+          if (!symbols.length) return;
+          await fetch("/api/cleanup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbols })
+          });
+        } catch (e) {}
       }
-      const fc = (n) =>
-        Math.abs(n).toLocaleString("en-IN", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      const fi = (n) => Math.round(Math.abs(n)).toLocaleString("en-IN");
 
-      // ── Summary ───────────────────────────────────────
+      // ── Render: Summary ───────────────────────────────
       function renderSummary() {
         let ti = 0,
           tc = 0,
@@ -747,81 +741,88 @@
           tdc += h.day_change * h.quantity;
           tp += h.pnl;
         });
-        const pp = (tp / ti) * 100,
-          dcPct = (tdc / (tc - tdc)) * 100;
+        const pp = (tp / ti) * 100;
+        const dcPct = (tdc / (tc - tdc)) * 100;
+
         document.getElementById("inv").innerHTML = fmtVal(ti);
         document.getElementById("cur").innerHTML = fmtVal(tc);
+
         const tdcEl = document.getElementById("tdc");
         tdcEl.innerHTML = (tdc < 0 ? "-" : "") + fmtVal(tdc);
         tdcEl.className = "val " + (tdc >= 0 ? "g" : "r");
         const tdcB = document.getElementById("tdc-pct");
         tdcB.textContent = (dcPct >= 0 ? "+" : "") + dcPct.toFixed(2) + "%";
         tdcB.className = "pct-badge " + (tdc >= 0 ? "pct-g" : "pct-r");
-        const pe = document.getElementById("pnl");
-        pe.innerHTML = (tp < 0 ? "-" : "") + fmtVal(tp);
-        pe.className = "val " + (tp >= 0 ? "g" : "r");
-        const pb = document.getElementById("pnl-pct");
-        pb.textContent = (pp >= 0 ? "+" : "") + pp.toFixed(2) + "%";
-        pb.className = "pct-badge " + (tp >= 0 ? "pct-g" : "pct-r");
+
+        const pnlEl = document.getElementById("pnl");
+        pnlEl.innerHTML = (tp < 0 ? "-" : "") + fmtVal(tp);
+        pnlEl.className = "val " + (tp >= 0 ? "g" : "r");
+        const pnlB = document.getElementById("pnl-pct");
+        pnlB.textContent = (pp >= 0 ? "+" : "") + pp.toFixed(2) + "%";
+        pnlB.className = "pct-badge " + (tp >= 0 ? "pct-g" : "pct-r");
       }
 
-      // ── Tag filter row ────────────────────────────────
+      // ── Render: Tag filter row ────────────────────────
       function tagColorStyle(t) {
-        const symbols = Object.keys(stockTags).filter((sym) =>
-          (stockTags[sym] || []).includes(t)
+        const syms = Object.keys(stockTags).filter((s) =>
+          (stockTags[s] || []).includes(t)
         );
-        const stocks = H.filter((h) => symbols.includes(h.tradingsymbol));
+        const stocks = H.filter((h) => syms.includes(h.tradingsymbol));
         if (!stocks.length) return { bg: "#161616" };
         const gainers = stocks.filter((h) => h.day_change >= 0).length;
-        const ratio = gainers / stocks.length; // 1 = all gainers, 0 = all losers
-        const alpha = 0.1 + Math.abs(ratio - 0.5) * 0.3;
-        if (ratio > 0.5) return { bg: `rgba(76,175,80,${alpha})` };
-        if (ratio < 0.5) return { bg: `rgba(244,67,54,${alpha})` };
-        return { bg: "#161616" };
+        const gainPct = (gainers / stocks.length) * 100;
+        return {
+          bg: `linear-gradient(to right, lightgreen 0%, lightgreen ${gainPct}%, lightcoral ${gainPct}%, lightcoral 100%)`
+        };
       }
 
       function renderTagFilterRow() {
         const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
-        const row = document.getElementById("tag-filters");
         let html = "";
+
         sorted.forEach((t) => {
           const count = Object.values(stockTags).filter((arr) =>
             arr.includes(t)
           ).length;
           const active = activeTagFilters.has(t);
-          const colorStyle = tagColorStyle(t);
+          const { bg: nameBg } = tagColorStyle(t);
           const borderColor = active ? "#2d5fc4" : "#2a2a2a";
-          const bg = active ? "#2d5fc4" : colorStyle.bg;
-          const color = active ? "#fff" : "#b0b0b0";
+          const countBg = active ? "#2d5fc4" : "#161616";
+          const nameColor = active ? "#fff" : "#111111";
+          const color = active ? "#fff" : "#d4d4d4";
           const dividerColor = active ? "rgba(255,255,255,.3)" : "#2a2a2a";
-          const xColor = active ? "rgba(255,255,255,.7)" : "#6a6a6a";
-          html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;border:1px solid ${borderColor};overflow:hidden;background:${bg}">`;
-          const nameHoverAttrs =
-            !editModeOn && !active
-              ? `onmouseover="this.style.color='#5b8def'" onmouseout="this.style.color='${color}'"`
+          const xColor = active ? "#fff" : "#d4d4d4";
+          const finalNameBg = active ? "#2d5fc4" : nameBg;
+
+          const pillHover =
+            !active && !editModeOn
+              ? `onmouseover="var c=this.querySelector('[data-count]');if(c){c.style.background='rgba(255,193,7,.15)';c.style.color='#ffc107'}"
+               onmouseout="var c=this.querySelector('[data-count]');if(c){c.style.background='transparent';c.style.color='${color}'}"`
               : "";
-          html += `<span style="padding:5px 12px;font-size:13px;color:${color};white-space:nowrap;cursor:${editModeOn ? "default" : "pointer"};display:flex;align-items:center;transition:color .15s" ${editModeOn ? "" : `onclick="toggleTagFilter('${t}')"`} ${nameHoverAttrs}>${t}</span>`;
+          html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;border:1px solid ${borderColor};overflow:hidden;background:${countBg}" ${pillHover}>`;
+          html += `<span style="padding:5px 12px;font-size:13px;color:${nameColor};white-space:nowrap;cursor:${editModeOn ? "default" : "pointer"};display:flex;align-items:center;background:${finalNameBg}" ${editModeOn ? "" : `onclick="toggleTagFilter('${t}')"`}>${t}</span>`;
+
           if (!editModeOn) {
-            const countHoverAttrs = active
-              ? ""
-              : `onmouseover="this.style.background='rgba(255,193,7,.15)';this.style.color='#ffc107'" onmouseout="this.style.background='transparent';this.style.color='${color}'"`;
-            html += `<span style="padding:5px 12px;font-size:13px;color:${color};cursor:pointer;white-space:nowrap;border-left:1px solid ${dividerColor};transition:all .15s" onclick="toggleTagFilter('${t}')" ${countHoverAttrs}>${count}</span>`;
+            html += `<span data-count style="padding:5px 12px;font-size:13px;color:${color};cursor:pointer;white-space:nowrap;border-left:1px solid ${dividerColor};transition:all .15s" onclick="toggleTagFilter('${t}')">${count}</span>`;
           }
+
           if (editModeOn) {
-            html += `<span onclick="renameTag('${t}')" title="Rename tag" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${xColor};cursor:pointer;transition:all .15s" onmouseover="this.style.color='#5b8def';this.style.background='rgba(91,141,239,.15)'" onmouseout="this.style.color='${xColor}';this.style.background='transparent'"><span style="font-size:13px;line-height:0;position:relative;top:0px">✎</span></span>`;
-            const xHoverAttrs = active
+            html += `<span onclick="renameTag('${t}')" title="Rename tag" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${xColor};cursor:pointer;transition:all .15s" onmouseover="this.style.color='#5b8def';this.style.background='rgba(91,141,239,.15)'" onmouseout="this.style.color='${xColor}';this.style.background='transparent'"><span style="font-size:13px;line-height:0">✎</span></span>`;
+            const xHover = active
               ? ""
               : `onmouseover="this.style.color='#f44336';this.style.background='rgba(244,67,54,.15)'" onmouseout="this.style.color='${xColor}';this.style.background='transparent'"`;
-            html += `<span onclick="deleteTag('${t}')" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${xColor};cursor:pointer;transition:all .15s" ${xHoverAttrs}><span style="font-size:19px;line-height:0;position:relative;top:-1px">×</span></span>`;
+            html += `<span onclick="deleteTag('${t}')" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${xColor};cursor:pointer;transition:all .15s" ${xHover}><span style="font-size:19px;line-height:0;position:relative;top:-1px">×</span></span>`;
           }
+
           html += `</span>`;
         });
+
         html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;overflow:hidden;border:1px solid #2a2a2a">`;
         html += `<span class="chip add-tag-chip grouped-chip" style="border:none;border-radius:0" onclick="openAddTagModal()"><span style="font-size:22px;line-height:0;position:relative;top:-2px">+</span><span>Add</span></span>`;
-        html += `<span class="chip edit-toggle-chip grouped-chip ${editModeOn ? "active" : ""}" style="border:none;border-left:1px solid #2a2a2a;border-radius:0" onclick="toggleEditMode()" title="Toggle edit mode"><span style="font-size:13px;line-height:0;position:relative;top:-1px">✎</span><span>Edit</span></span>`;
-        html += `<span class="chip edit-toggle-chip grouped-chip" style="border:none;border-left:1px solid #4a4a4a;border-radius:0" onclick="resetFilters()" title="Clear filters and search"><span style="font-size:18px;line-height:0;position:relative;top:-1px">↺</span><span>Reset</span></span>`;
+        html += `<span class="chip edit-toggle-chip grouped-chip ${editModeOn ? "active" : ""}" style="border:none;border-left:1px solid #2a2a2a;border-radius:0" onclick="toggleEditMode()"><span style="font-size:13px;line-height:0;position:relative;top:-1px">✎</span><span>Edit</span></span>`;
         html += `</span>`;
-        row.innerHTML = html;
+
+        document.getElementById("tag-filters").innerHTML = html;
       }
 
       function resetFilters() {
@@ -844,14 +845,12 @@
           ? activeTagFilters.delete(t)
           : activeTagFilters.add(t);
         autoTagFilters.delete(t);
-        const searchEl = document.getElementById("search");
-        if (searchEl) searchEl.value = "";
         renderTagFilterRow();
         renderTable();
         focusSearch();
       }
 
-      // ── Table ─────────────────────────────────────────
+      // ── Render: Table ─────────────────────────────────
       const COLS = [
         {
           k: "tradingsymbol",
@@ -871,7 +870,7 @@
         },
         {
           k: "pnl",
-          l: "P&L",
+          l: "P&amp;L",
           num: true,
           fmt: (v) =>
             `<span class="${v >= 0 ? "pp" : "pn"}">${v >= 0 ? "+" : "-"}${fi(v)}</span>`
@@ -884,11 +883,11 @@
             `<span class="${v >= 0 ? "pos" : "neg"}">${Math.abs(v).toFixed(2)}%</span>`
         },
         {
-          k: "day_change",
+          k: "day_change_percentage",
           l: "Day chg.",
           num: true,
-          fmt: (v, r) =>
-            `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${r.day_change_percentage.toFixed(2)}%</span>`
+          fmt: (v) =>
+            `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${v.toFixed(2)}%</span>`
         }
       ];
 
@@ -896,8 +895,9 @@
         if (sCol !== k) {
           sCol = k;
           sDir = 1;
-        } else if (sDir === 1) sDir = -1;
-        else {
+        } else if (sDir === 1) {
+          sDir = -1;
+        } else {
           sCol = null;
           sDir = 0;
         }
@@ -905,25 +905,19 @@
       }
 
       function sortVal(row, key) {
-        if (key === "_ret") return Math.abs(row[key]);
-        return row[key];
+        return key === "_ret" ? Math.abs(row[key]) : row[key];
       }
 
-      // Render tag filters and empty table shell immediately, before first API call
-      renderTagFilterRow();
-      renderTable();
-
       function renderTable() {
-        const rawQ =
-          (document.getElementById("search") || {}).value
-            ?.toLowerCase()
-            .trim() || "";
+        const rawQ = (document.getElementById("search")?.value || "")
+          .toLowerCase()
+          .trim();
         const queries = rawQ
           .split(",")
           .map((s) => s.replace(/\s+/g, ""))
           .filter(Boolean);
 
-        // Auto-select tag filters whose name starts with any comma-separated query term
+        // Auto-activate tag filters matching search query
         const matchedTags = queries.length
           ? new Set(
               globalTags.filter((t) =>
@@ -935,7 +929,6 @@
           : new Set();
         let filtersChanged = false;
 
-        // Remove previously auto-added tags that no longer match
         autoTagFilters.forEach((t) => {
           if (!matchedTags.has(t)) {
             activeTagFilters.delete(t);
@@ -943,7 +936,6 @@
             filtersChanged = true;
           }
         });
-        // Add newly matched tags
         matchedTags.forEach((t) => {
           if (!activeTagFilters.has(t)) {
             activeTagFilters.add(t);
@@ -974,6 +966,7 @@
           }
           return true;
         });
+
         if (sCol && sDir !== 0) {
           const col = COLS.find((c) => c.k === sCol);
           data = [...data].sort(
@@ -988,6 +981,7 @@
                 : sortVal(a, sCol) - sortVal(b, sCol))
           );
         }
+
         const icon = (k) =>
           sCol !== k
             ? '<span class="si"></span>'
@@ -995,6 +989,7 @@
               ? '<span class="si">▲</span>'
               : '<span class="si">▼</span>';
         const cls = (k) => (sCol === k ? (sDir === 1 ? "asc" : "desc") : "");
+
         document.getElementById("th").innerHTML =
           "<tr>" +
           COLS.map(
@@ -1002,6 +997,7 @@
               `<th class="${cls(c.k)}" onclick="cycleSort('${c.k}')">${c.l}${icon(c.k)}</th>`
           ).join("") +
           "</tr>";
+
         document.getElementById("tb").innerHTML = data
           .map(
             (h) =>
@@ -1012,7 +1008,7 @@
           .join("");
       }
 
-      // ── Assign tags modal ─────────────────────────────
+      // ── Modal: Assign tags ────────────────────────────
       function openAssignModal(symbol) {
         editingSymbol = symbol;
         document.getElementById("assign-modal-title").textContent = symbol;
@@ -1030,39 +1026,106 @@
           return;
         }
         container.innerHTML = sorted
-          .map((t) => {
-            const sel = assigned.includes(t);
-            return `<button class="tag-pill-toggle ${sel ? "selected" : ""}" onclick="toggleStockTag('${t}')">${t}</button>`;
-          })
+          .map(
+            (t) =>
+              `<button class="tag-pill-toggle ${assigned.includes(t) ? "selected" : ""}" onclick="toggleStockTag('${t}')">${t}</button>`
+          )
           .join("");
       }
 
       async function toggleStockTag(tag) {
         const assigned = stockTags[editingSymbol] || [];
         const isAssigned = assigned.includes(tag);
-        try {
-          if (isAssigned) {
-            await fetch("/api/stock-tags", {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ symbol: editingSymbol, tag })
-            });
-            stockTags[editingSymbol] = assigned.filter((t) => t !== tag);
-          } else {
-            await fetch("/api/stock-tags", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ symbol: editingSymbol, tag })
-            });
-            if (!stockTags[editingSymbol]) stockTags[editingSymbol] = [];
-            stockTags[editingSymbol].push(tag);
-          }
-        } catch (e) {}
+        const prev = [...assigned];
+
+        // Optimistic update
+        stockTags[editingSymbol] = isAssigned
+          ? assigned.filter((t) => t !== tag)
+          : [...assigned, tag];
+        persistTagsCache();
         renderAssignPills();
         renderTagFilterRow();
         renderTable();
+
+        try {
+          const res = await fetch("/api/stock-tags", {
+            method: isAssigned ? "DELETE" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbol: editingSymbol, tag })
+          });
+          if (!res.ok) throw new Error("Failed to update tag assignment");
+        } catch (e) {
+          stockTags[editingSymbol] = prev;
+          persistTagsCache();
+          renderAssignPills();
+          renderTagFilterRow();
+          renderTable();
+          showToast(e.message);
+        }
       }
 
+      function closeAssignModal() {
+        document.getElementById("assign-modal").classList.remove("open");
+        editingSymbol = null;
+        focusSearch();
+      }
+
+      document.getElementById("assign-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("assign-modal"))
+          closeAssignModal();
+      });
+
+      // ── Modal: Add tag ────────────────────────────────
+      function openAddTagModal() {
+        document.getElementById("new-tag-input").value = "";
+        document.getElementById("addtag-modal").classList.add("open");
+        setTimeout(() => document.getElementById("new-tag-input").focus(), 50);
+      }
+
+      async function createTag() {
+        const inp = document.getElementById("new-tag-input");
+        const val = inp.value.trim();
+        if (!val || globalTags.includes(val)) {
+          inp.value = "";
+          return;
+        }
+
+        // Optimistic update
+        globalTags.push(val);
+        persistTagsCache();
+        inp.value = "";
+        renderTagFilterRow();
+        closeAddTagModal();
+
+        try {
+          const res = await fetch("/api/tags", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: val })
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Failed to create tag");
+          }
+        } catch (e) {
+          globalTags = globalTags.filter((t) => t !== val);
+          persistTagsCache();
+          renderTagFilterRow();
+          showToast(e.message);
+        }
+      }
+
+      function closeAddTagModal() {
+        document.getElementById("addtag-modal").classList.remove("open");
+        focusSearch();
+      }
+
+      document.getElementById("addtag-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("addtag-modal"))
+          closeAddTagModal();
+      });
+
+      // ── Modal: Rename tag ─────────────────────────────
       let renamingTag = null;
 
       function renameTag(tag) {
@@ -1087,36 +1150,47 @@
           alert("A tag with this name already exists.");
           return;
         }
-        try {
-          const res = await fetch(
-            "/api/tags/" + encodeURIComponent(renamingTag),
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ newName })
-            }
-          );
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            alert(err.message || "Failed to rename tag");
-            return;
-          }
-        } catch (e) {
-          return;
-        }
-        globalTags = globalTags.map((t) => (t === renamingTag ? newName : t));
+
+        const oldName = renamingTag;
+        const prevTags = [...globalTags];
+        const prevStock = JSON.parse(JSON.stringify(stockTags));
+        const prevFilters = new Set(activeTagFilters);
+
+        // Optimistic update
+        globalTags = globalTags.map((t) => (t === oldName ? newName : t));
         Object.keys(stockTags).forEach((sym) => {
           stockTags[sym] = stockTags[sym].map((t) =>
-            t === renamingTag ? newName : t
+            t === oldName ? newName : t
           );
         });
-        if (activeTagFilters.has(renamingTag)) {
-          activeTagFilters.delete(renamingTag);
+        if (activeTagFilters.has(oldName)) {
+          activeTagFilters.delete(oldName);
           activeTagFilters.add(newName);
         }
+        persistTagsCache();
         renderTagFilterRow();
         renderTable();
         closeRenameTagModal();
+
+        try {
+          const res = await fetch("/api/tags/" + encodeURIComponent(oldName), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ newName })
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Failed to rename tag");
+          }
+        } catch (e) {
+          globalTags = prevTags;
+          stockTags = prevStock;
+          activeTagFilters = prevFilters;
+          persistTagsCache();
+          renderTagFilterRow();
+          renderTable();
+          showToast(e.message);
+        }
       }
 
       function closeRenameTagModal() {
@@ -1132,101 +1206,65 @@
             closeRenameTagModal();
         });
 
+      // ── Delete tag ────────────────────────────────────
       async function deleteTag(tag) {
         if (!confirm(`Delete tag "${tag}"?`)) return;
-        try {
-          await fetch("/api/tags/" + encodeURIComponent(tag), {
-            method: "DELETE"
-          });
-        } catch (e) {}
+
+        const prevTags = [...globalTags];
+        const prevStock = JSON.parse(JSON.stringify(stockTags));
+        const wasActive = activeTagFilters.has(tag);
+
+        // Optimistic update
         globalTags = globalTags.filter((t) => t !== tag);
         Object.keys(stockTags).forEach((sym) => {
           stockTags[sym] = stockTags[sym].filter((t) => t !== tag);
         });
         activeTagFilters.delete(tag);
-        renderAssignPills();
+        persistTagsCache();
+        if (editingSymbol) renderAssignPills();
         renderTagFilterRow();
         renderTable();
-      }
 
-      function closeAssignModal() {
-        document.getElementById("assign-modal").classList.remove("open");
-        editingSymbol = null;
-        focusSearch();
-      }
-
-      document.getElementById("assign-modal").addEventListener("click", (e) => {
-        if (e.target === document.getElementById("assign-modal"))
-          closeAssignModal();
-      });
-
-      // ── Add tag modal ─────────────────────────────────
-      function openAddTagModal() {
-        document.getElementById("new-tag-input").value = "";
-        document.getElementById("addtag-modal").classList.add("open");
-        setTimeout(() => document.getElementById("new-tag-input").focus(), 50);
-      }
-
-      async function createTag() {
-        const inp = document.getElementById("new-tag-input");
-        const val = inp.value.trim();
-        if (!val || globalTags.includes(val)) {
-          inp.value = "";
-          return;
-        }
         try {
-          const res = await fetch("/api/tags", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: val })
+          const res = await fetch("/api/tags/" + encodeURIComponent(tag), {
+            method: "DELETE"
           });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            alert(err.message || "Failed to create tag");
-            return;
-          }
+          if (!res.ok) throw new Error("Failed to delete tag");
         } catch (e) {
-          return;
+          globalTags = prevTags;
+          stockTags = prevStock;
+          if (wasActive) activeTagFilters.add(tag);
+          persistTagsCache();
+          if (editingSymbol) renderAssignPills();
+          renderTagFilterRow();
+          renderTable();
+          showToast(e.message);
         }
-        globalTags.push(val);
-        inp.value = "";
-        renderTagFilterRow();
-        closeAddTagModal();
       }
 
-      function closeAddTagModal() {
-        document.getElementById("addtag-modal").classList.remove("open");
-        focusSearch();
-      }
-
-      document.getElementById("addtag-modal").addEventListener("click", (e) => {
-        if (e.target === document.getElementById("addtag-modal"))
-          closeAddTagModal();
-      });
-
-      // ── Keep focus on search input ────────────────────
+      // ── Focus management ──────────────────────────────
       function isAnyModalOpen() {
-        return (
-          document.getElementById("assign-modal").classList.contains("open") ||
-          document.getElementById("addtag-modal").classList.contains("open") ||
-          document.getElementById("renametag-modal").classList.contains("open")
+        return ["assign-modal", "addtag-modal", "renametag-modal"].some((id) =>
+          document.getElementById(id).classList.contains("open")
         );
       }
+
       function focusSearch() {
         if (isAnyModalOpen()) return;
-        const sel = window.getSelection();
-        if (sel && sel.toString().length > 0) return;
+        if (window.getSelection()?.toString().length > 0) return;
         const el = document.getElementById("search");
         if (el && document.activeElement !== el) el.focus();
       }
+
+      document.addEventListener("dblclick", (e) => {
+        if (isAnyModalOpen()) return;
+        resetFilters();
+      });
+
       document.addEventListener("click", (e) => {
         const inAnyModal = e.target.closest(".modal-overlay");
-        const isInteractive = e.target.closest(
-          "button, .chip, .tag-pill-toggle, input, span[onclick]"
-        );
-        if (!inAnyModal && !isInteractive) {
-          focusSearch();
-        }
+        if (!inAnyModal) focusSearch();
+
         if (editModeOn) {
           const isEditAction = e.target.closest(
             '[onclick^="renameTag"], [onclick^="deleteTag"], [onclick^="toggleEditMode"]'
@@ -1238,7 +1276,19 @@
           }
         }
       });
-      focusSearch();
+
+      // ── Init ──────────────────────────────────────────
+      setStatus(true); // show clock immediately before first fetch
+      if (loadTagsFromCache()) renderTagFilterRow();
+      renderTable();
+      setInterval(fetchHoldings, 5000);
+      (async () => {
+        fetchHoldings();
+        await loadTagsFromServer();
+        renderTagFilterRow();
+        renderTable();
+        focusSearch();
+      })().catch(console.error);
     </script>
   </body>
 </html>

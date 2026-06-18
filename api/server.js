@@ -4,7 +4,6 @@ const { neon } = require("@neondatabase/serverless");
 const http = require("http");
 const https = require("https");
 const fs = require("fs");
-const url = require("url");
 const path = require("path");
 const crypto = require("crypto");
 
@@ -25,6 +24,11 @@ function serveFiles(req, res) {
     path.join(publicDir, req.url === "/" ? "index.html" : req.url)
   );
 
+  if (!filePath.startsWith(publicDir)) {
+    res.writeHead(403);
+    res.end();
+    return;
+  }
 
   fs.readFile(filePath, (err, data) => {
 
@@ -49,8 +53,6 @@ function serveFiles(req, res) {
 
     res.end(data);
   });
-
-  return;
 }
 
 // Generate access token
@@ -147,7 +149,6 @@ function readJsonBody(req) {
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
   });
   res.end(JSON.stringify(data));
 }
@@ -155,12 +156,14 @@ function sendJson(res, statusCode, data) {
 // GET /api/tags -> { tags: [{id, name}], stockTags: { SYMBOL: [tagName, ...] } }
 async function handleGetTags(req, res) {
   try {
-    const tags = await sql`SELECT id, name FROM tags ORDER BY name ASC`;
-    const rows = await sql`
-      SELECT st.symbol, t.name
-      FROM stock_tags st
-      JOIN tags t ON t.id = st.tag_id
-    `;
+    const [tags, rows] = await Promise.all([
+      sql`SELECT id, name FROM tags ORDER BY name ASC`,
+      sql`
+        SELECT st.symbol, t.name
+        FROM stock_tags st
+        JOIN tags t ON t.id = st.tag_id
+      `,
+    ]);
     const stockTags = {};
     for (const row of rows) {
       if (!stockTags[row.symbol]) stockTags[row.symbol] = [];
@@ -298,6 +301,8 @@ async function handleCleanup(req, res) {
 // Create HTTP server
 const server = http.createServer((req, res) => {
 
+  console.log(`${req.method} ${req.url}`);
+
   // CORS
   res.setHeader(
     "Access-Control-Allow-Origin",
@@ -321,7 +326,7 @@ const server = http.createServer((req, res) => {
   }
 
   // ── Tag API routes ──────────────────────────────────
-  const parsedForTags = url.parse(req.url, true);
+  const parsedForTags = new URL(req.url, "http://placeholder.local");
   const tagPathname = parsedForTags.pathname;
 
   if (tagPathname === "/api/tags" && req.method === "GET") {
@@ -381,10 +386,10 @@ const server = http.createServer((req, res) => {
   // Callback route
   if (req.url.startsWith("/callback")) {
 
-    const parsedUrl = url.parse(req.url, true);
+    const parsedUrl = new URL(req.url, "http://placeholder.local");
 
     const requestToken =
-      parsedUrl.query.request_token;
+      parsedUrl.searchParams.get("request_token");
 
     if (!requestToken) {
 
@@ -416,7 +421,7 @@ const server = http.createServer((req, res) => {
         }
 
         res.writeHead(302, {
-          location: "/",
+          Location: "/",
         }).end();
       }
     );
@@ -461,8 +466,6 @@ const server = http.createServer((req, res) => {
     },
   };
 
-  console.log(`${req.method} ${req.url}`);
-
   const proxy =
     https.request(options, (kiteRes) => {
 
@@ -474,16 +477,10 @@ const server = http.createServer((req, res) => {
 
       kiteRes.on("end", () => {
 
-        console.log(`${kiteRes.statusCode}`);
-
         res.writeHead(
           kiteRes.statusCode,
           {
-            "Content-Type":
-              "application/json",
-
-            "Access-Control-Allow-Origin":
-              "*",
+            "Content-Type": "application/json",
           }
         );
 
