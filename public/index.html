@@ -605,11 +605,36 @@
       </div>
     </div>
 
+    <!-- Delete tag confirmation modal -->
+    <div class="modal-overlay" id="delete-confirm-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Delete Tag</h3>
+          <span class="modal-close" onclick="closeDeleteConfirmModal()">×</span>
+        </div>
+        <p
+          id="delete-confirm-text"
+          style="font-size: 13px; color: #b0b0b0; margin-bottom: 16px"
+        ></p>
+        <div class="add-tag-row">
+          <button
+            class="btn-add"
+            id="delete-confirm-btn"
+            style="background: #c4302d; flex: 1"
+            onclick="confirmDeleteTag()"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast-container" id="toast-container"></div>
 
     <script>
       // ── State ─────────────────────────────────────────
       let H = [];
+      let holdingsLoaded = false;
       let sCol = "day_change_percentage",
         sDir = -1;
       let cleanupDone = false;
@@ -617,6 +642,7 @@
       let autoTagFilters = new Set();
       let editingSymbol = null;
       let editModeOn = false;
+      let addTagModalOpen = false;
       let globalTags = [];
       let stockTags = {};
 
@@ -692,6 +718,7 @@
             _cur: h.quantity * h.last_price,
             _ret: ((h.last_price - h.average_price) / h.average_price) * 100
           }));
+          holdingsLoaded = true;
           setStatus(true);
           renderSummary();
           renderTagFilterRow();
@@ -788,37 +815,47 @@
           const { bg: nameBg } = tagColorStyle(t);
           const borderColor = active ? "#2d5fc4" : "#2a2a2a";
           const countBg = active ? "#2d5fc4" : "#161616";
-          const nameColor = active ? "#fff" : "#111111";
+          const nameColor = editModeOn
+            ? "#fff"
+            : active
+              ? "#fff"
+              : holdingsLoaded
+                ? "#111111"
+                : "#fff";
           const color = active ? "#fff" : "#d4d4d4";
           const dividerColor = active ? "rgba(255,255,255,.3)" : "#2a2a2a";
           const xColor = active ? "#fff" : "#d4d4d4";
-          const finalNameBg = active ? "#2d5fc4" : nameBg;
+          const finalNameBg = active
+            ? "#2d5fc4"
+            : editModeOn
+              ? "#161616"
+              : nameBg;
 
-          const pillHover =
-            !active && !editModeOn
-              ? `onmouseover="var c=this.querySelector('[data-count]');if(c){c.style.background='rgba(255,193,7,.15)';c.style.color='#ffc107'}"
-               onmouseout="var c=this.querySelector('[data-count]');if(c){c.style.background='transparent';c.style.color='${color}'}"`
-              : "";
-          html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;border:1px solid ${borderColor};overflow:hidden;background:${countBg}" ${pillHover}>`;
+          html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;border:1px solid ${borderColor};overflow:hidden;background:${countBg}">`;
           html += `<span style="padding:5px 12px;font-size:13px;color:${nameColor};white-space:nowrap;cursor:${editModeOn ? "default" : "pointer"};display:flex;align-items:center;background:${finalNameBg}" ${editModeOn ? "" : `onclick="toggleTagFilter('${t}')"`}>${t}</span>`;
 
           if (!editModeOn) {
-            html += `<span data-count style="padding:5px 12px;font-size:13px;color:${color};cursor:pointer;white-space:nowrap;border-left:1px solid ${dividerColor};transition:all .15s" onclick="toggleTagFilter('${t}')">${count}</span>`;
+            html += `<span data-count style="padding:5px 12px;font-size:13px;color:${color};cursor:pointer;white-space:nowrap;border-left:1px solid ${dividerColor}" onclick="toggleTagFilter('${t}')">${count}</span>`;
           }
 
           if (editModeOn) {
-            html += `<span onclick="renameTag('${t}')" title="Rename tag" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${xColor};cursor:pointer;transition:all .15s" onmouseover="this.style.color='#5b8def';this.style.background='rgba(91,141,239,.15)'" onmouseout="this.style.color='${xColor}';this.style.background='transparent'"><span style="font-size:13px;line-height:0">✎</span></span>`;
-            const xHover = active
-              ? ""
-              : `onmouseover="this.style.color='#f44336';this.style.background='rgba(244,67,54,.15)'" onmouseout="this.style.color='${xColor}';this.style.background='transparent'"`;
-            html += `<span onclick="deleteTag('${t}')" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${xColor};cursor:pointer;transition:all .15s" ${xHover}><span style="font-size:19px;line-height:0;position:relative;top:-1px">×</span></span>`;
+            const renameColor = active ? xColor : "#5b8def";
+            const renameBgEffect = active
+              ? "transparent"
+              : "rgba(91,141,239,.15)";
+            html += `<span onclick="renameTag('${t}')" title="Rename tag" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${renameColor};cursor:pointer;background:${renameBgEffect}"><span style="font-size:13px;line-height:0">✎</span></span>`;
+            const deleteColor = active ? xColor : "#f44336";
+            const deleteBgEffect = active
+              ? "transparent"
+              : "rgba(244,67,54,.15)";
+            html += `<span onclick="deleteTag('${t}')" style="display:flex;align-items:center;justify-content:center;padding:0 10px;border-left:1px solid ${dividerColor};color:${deleteColor};cursor:pointer;background:${deleteBgEffect}"><span style="font-size:19px;line-height:0;position:relative;top:-1px">×</span></span>`;
           }
 
           html += `</span>`;
         });
 
         html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;overflow:hidden;border:1px solid #2a2a2a">`;
-        html += `<span class="chip add-tag-chip grouped-chip" style="border:none;border-radius:0" onclick="openAddTagModal()"><span style="font-size:22px;line-height:0;position:relative;top:-2px">+</span><span>Add</span></span>`;
+        html += `<span class="chip add-tag-chip grouped-chip ${addTagModalOpen ? "active" : ""}" style="border:none;border-radius:0" onclick="openAddTagModal()"><span style="font-size:22px;line-height:0;position:relative;top:-2px">+</span><span>Add</span></span>`;
         html += `<span class="chip edit-toggle-chip grouped-chip ${editModeOn ? "active" : ""}" style="border:none;border-left:1px solid #2a2a2a;border-radius:0" onclick="toggleEditMode()"><span style="font-size:13px;line-height:0;position:relative;top:-1px">✎</span><span>Edit</span></span>`;
         html += `</span>`;
 
@@ -894,9 +931,9 @@
       function cycleSort(k) {
         if (sCol !== k) {
           sCol = k;
-          sDir = 1;
-        } else if (sDir === 1) {
           sDir = -1;
+        } else if (sDir === -1) {
+          sDir = 1;
         } else {
           sCol = null;
           sDir = 0;
@@ -1077,8 +1114,10 @@
 
       // ── Modal: Add tag ────────────────────────────────
       function openAddTagModal() {
+        addTagModalOpen = true;
         document.getElementById("new-tag-input").value = "";
         document.getElementById("addtag-modal").classList.add("open");
+        renderTagFilterRow();
         setTimeout(() => document.getElementById("new-tag-input").focus(), 50);
       }
 
@@ -1116,7 +1155,9 @@
       }
 
       function closeAddTagModal() {
+        addTagModalOpen = false;
         document.getElementById("addtag-modal").classList.remove("open");
+        renderTagFilterRow();
         focusSearch();
       }
 
@@ -1207,8 +1248,38 @@
         });
 
       // ── Delete tag ────────────────────────────────────
-      async function deleteTag(tag) {
-        if (!confirm(`Delete tag "${tag}"?`)) return;
+      let pendingDeleteTag = null;
+
+      function deleteTag(tag) {
+        pendingDeleteTag = tag;
+        document.getElementById("delete-confirm-text").textContent =
+          `Delete tag "${tag}"?`;
+        document.getElementById("delete-confirm-modal").classList.add("open");
+        setTimeout(
+          () => document.getElementById("delete-confirm-btn").focus(),
+          50
+        );
+      }
+
+      function closeDeleteConfirmModal() {
+        document
+          .getElementById("delete-confirm-modal")
+          .classList.remove("open");
+        pendingDeleteTag = null;
+        focusSearch();
+      }
+
+      document
+        .getElementById("delete-confirm-modal")
+        .addEventListener("click", (e) => {
+          if (e.target === document.getElementById("delete-confirm-modal"))
+            closeDeleteConfirmModal();
+        });
+
+      async function confirmDeleteTag() {
+        const tag = pendingDeleteTag;
+        closeDeleteConfirmModal();
+        if (!tag) return;
 
         const prevTags = [...globalTags];
         const prevStock = JSON.parse(JSON.stringify(stockTags));
@@ -1244,9 +1315,12 @@
 
       // ── Focus management ──────────────────────────────
       function isAnyModalOpen() {
-        return ["assign-modal", "addtag-modal", "renametag-modal"].some((id) =>
-          document.getElementById(id).classList.contains("open")
-        );
+        return [
+          "assign-modal",
+          "addtag-modal",
+          "renametag-modal",
+          "delete-confirm-modal"
+        ].some((id) => document.getElementById(id).classList.contains("open"));
       }
 
       function focusSearch() {
