@@ -34,6 +34,9 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
       }
       .logo h1 {
         font-size: 17px;
@@ -50,7 +53,7 @@
       }
       .search-box input {
         width: 100%;
-        padding: 8px 12px 8px 34px;
+        padding: 8px 50px 8px 34px;
         border: 1px solid #4a4a4a;
         border-radius: 8px;
         font-size: 13px;
@@ -73,6 +76,16 @@
         transform: translateY(-50%);
         color: #6a6a6a;
       }
+      .search-box .search-count {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6a6a6a;
+        font-size: 12px;
+        pointer-events: none;
+        white-space: nowrap;
+      }
       .status-pill {
         font-size: 12px;
         color: #ffffff;
@@ -80,6 +93,7 @@
         padding: 6px 14px;
         border-radius: 20px;
         border: 1px solid #4a4a4a;
+        user-select: none;
       }
       .status-dot {
         width: 7px;
@@ -91,6 +105,8 @@
       .dot-live {
         background: #4caf50;
         animation: pulse 2s infinite;
+        position: relative;
+        top: -0.35px;
       }
       .dot-err {
         background: #f44336;
@@ -122,7 +138,16 @@
       .stat .lbl {
         font-size: 12px;
         color: #8a8a8a;
+        margin-bottom: 10px;
+      }
+      .stat .lbl-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
         margin-bottom: 8px;
+      }
+      .stat .lbl-row .lbl {
+        margin-bottom: 0;
       }
       .val {
         font-size: 26px;
@@ -149,6 +174,48 @@
         padding: 3px 8px;
         border-radius: 4px;
         align-self: flex-end;
+        position: relative;
+      }
+      .pct-badge .tooltip {
+        position: absolute;
+        bottom: 100%;
+        margin-bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1a1a1a;
+        border: 1px solid #4a4a4a;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s;
+        pointer-events: none;
+        z-index: 50;
+      }
+      .pct-badge .tooltip::before,
+      .pct-badge .tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-style: solid;
+      }
+      .pct-badge .tooltip::before {
+        border-width: 6px;
+        border-color: #4a4a4a transparent transparent transparent;
+      }
+      .pct-badge .tooltip::after {
+        border-width: 5px;
+        margin-top: -1px;
+        border-color: #1a1a1a transparent transparent transparent;
+      }
+      .pct-badge:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
       }
       .pct-g {
         background: rgba(76, 175, 80, 0.15);
@@ -171,11 +238,20 @@
       }
       .filter-row {
         display: flex;
+        align-items: end;
+        justify-content: end;
         gap: 6px;
-        flex-wrap: wrap;
         margin-bottom: 12px;
-        align-items: center;
         min-height: 28px;
+      }
+      .filter-row-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        flex: 1;
+      }
+      .filter-row-actions {
+        position: absolute;
       }
       .table-wrap {
         background: #111111;
@@ -237,7 +313,7 @@
         border-bottom: none;
       }
       tr:hover td {
-        background: #161616;
+        background: #2a2a2a;
       }
       tbody tr {
         cursor: pointer;
@@ -432,17 +508,25 @@
         border-radius: 8px;
         font-size: 13px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        animation: toast-in 0.2s ease-out;
+        animation: toast 3s ease-in-out forwards;
         max-width: 320px;
       }
-      @keyframes toast-in {
-        from {
+      @keyframes toast {
+        0% {
           opacity: 0;
           transform: translateY(8px);
         }
-        to {
+        20% {
           opacity: 1;
           transform: translateY(0);
+        }
+        80% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(8px);
         }
       }
 
@@ -455,7 +539,7 @@
         background: #111111;
       }
       ::-webkit-scrollbar-thumb {
-        background: #2a2a2a;
+        background: #4a4a4a;
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
@@ -479,10 +563,15 @@
   <body>
     <div id="dashboard">
       <div class="header">
-        <div class="logo">
+        <a
+          class="logo"
+          href="https://kite.zerodha.com/holdings/equity"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <img src="favicon.ico" alt="Zerodha Logo" width="32" height="32" />
           <h1>Zerodha Dashboard</h1>
-        </div>
+        </a>
         <div class="header-search">
           <div class="search-box">
             <svg
@@ -502,6 +591,7 @@
               placeholder="Search by symbol or tag"
               oninput="renderTable()"
             />
+            <span class="search-count" id="search-count"></span>
           </div>
         </div>
         <div class="status-pill" id="status-pill">
@@ -528,14 +618,20 @@
           <div class="val-row"><div class="val" id="cur">—</div></div>
         </div>
         <div class="stat">
-          <div class="lbl">Day's P&amp;L</div>
+          <div class="lbl-row">
+            <span class="lbl">Day's P&amp;L</span>
+            <span class="pct-badge" id="tdc-breadth"></span>
+          </div>
           <div class="val-row">
             <div class="val" id="tdc">—</div>
             <span class="pct-badge" id="tdc-pct"></span>
           </div>
         </div>
         <div class="stat">
-          <div class="lbl">Total P&amp;L</div>
+          <div class="lbl-row">
+            <span class="lbl">Total P&amp;L</span>
+            <span class="pct-badge" id="pnl-breadth"></span>
+          </div>
           <div class="val-row">
             <div class="val" id="pnl">—</div>
             <span class="pct-badge" id="pnl-pct"></span>
@@ -544,7 +640,10 @@
       </div>
 
       <div class="table-container">
-        <div class="filter-row" id="tag-filters"></div>
+        <div class="filter-row">
+          <div class="filter-row-tags" id="tag-filters"></div>
+          <div class="filter-row-actions" id="tag-actions"></div>
+        </div>
         <div class="table-wrap">
           <div class="table-scroll">
             <table>
@@ -672,7 +771,7 @@
         el.className = "toast";
         el.textContent = message;
         document.getElementById("toast-container").appendChild(el);
-        setTimeout(() => el.remove(), 4000);
+        setTimeout(() => el.remove(), 5000);
       }
 
       // ── Formatting ────────────────────────────────────
@@ -697,7 +796,7 @@
         const ts = `${String(h).padStart(2, "0")}:${m}:${s} ${ap}`;
         const pill = document.getElementById("status-pill");
         if (pill) {
-          pill.innerHTML = `<span class="status-dot ${ok ? "dot-live" : "dot-err"}" id="sdot"></span>${ok ? "Live" : "Error"}&nbsp;<span style="font-size:32px;line-height:0;vertical-align:middle;position:relative;top:-0.5px">·</span>&nbsp;<span id="ts-text">${ts}</span>`;
+          pill.innerHTML = `<span class="status-dot ${ok ? "dot-live" : "dot-err"}" id="sdot"></span>${ok ? "Live" : "Offline"}&nbsp;<span style="font-size:32px;line-height:0;vertical-align:middle;position:relative;top:-0.5px">·</span>&nbsp;<span id="ts-text">${ts}</span>`;
         }
       }
 
@@ -706,6 +805,7 @@
         try {
           const res = await fetch("/portfolio/holdings");
           const json = await res.json();
+          const isApiFailure = json.status === "error";
           if (json.status === "Login-Required") {
             setStatus(false);
             window.location.href = "/login";
@@ -718,8 +818,8 @@
             _cur: h.quantity * h.last_price,
             _ret: ((h.last_price - h.average_price) / h.average_price) * 100
           }));
-          holdingsLoaded = true;
-          setStatus(true);
+          holdingsLoaded = isApiFailure ? false : true;
+          setStatus(!isApiFailure);
           renderSummary();
           renderTagFilterRow();
           renderTable();
@@ -737,9 +837,11 @@
         try {
           const res = await fetch("/api/tags");
           const data = await res.json();
-          globalTags = (data.tags || []).map((t) => t.name);
-          stockTags = data.stockTags || {};
-          persistTagsCache();
+          if (data.status !== "error") {
+            globalTags = (data.tags || []).map((t) => t.name);
+            stockTags = data.stockTags || {};
+            persistTagsCache();
+          }
         } catch (e) {}
       }
 
@@ -768,8 +870,8 @@
           tdc += h.day_change * h.quantity;
           tp += h.pnl;
         });
-        const pp = (tp / ti) * 100;
-        const dcPct = (tdc / (tc - tdc)) * 100;
+        const pp = (tp / ti) * 100 || 0;
+        const dcPct = (tdc / (tc - tdc)) * 100 || 0;
 
         document.getElementById("inv").innerHTML = fmtVal(ti);
         document.getElementById("cur").innerHTML = fmtVal(tc);
@@ -787,6 +889,25 @@
         const pnlB = document.getElementById("pnl-pct");
         pnlB.textContent = (pp >= 0 ? "+" : "") + pp.toFixed(2) + "%";
         pnlB.className = "pct-badge " + (tp >= 0 ? "pct-g" : "pct-r");
+
+        // ── Market breadth (with hover tooltip showing raw up/down counts) ──
+        const totalCount = H.length || 0;
+        const dayGainers = H.filter((h) => h.day_change >= 0).length;
+        const totalGainers = H.filter((h) => h.pnl >= 0).length;
+        const dayBreadthPct = (dayGainers / totalCount) * 100 || 0;
+        const totalBreadthPct = (totalGainers / totalCount) * 100 || 0;
+
+        const dayLosers = totalCount - dayGainers;
+        const tdcBreadthEl = document.getElementById("tdc-breadth");
+        tdcBreadthEl.innerHTML = `${dayBreadthPct.toFixed(2)} ${dayBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${dayGainers} ↑</span> <span class="r">${dayLosers} ↓</span></span>`;
+        tdcBreadthEl.className =
+          "pct-badge " + (dayBreadthPct >= 50 ? "pct-g" : "pct-r");
+
+        const totalLosers = totalCount - totalGainers;
+        const pnlBreadthEl = document.getElementById("pnl-breadth");
+        pnlBreadthEl.innerHTML = `${totalBreadthPct.toFixed(2)} ${totalBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${totalGainers} ↑</span> <span class="r">${totalLosers} ↓</span></span>`;
+        pnlBreadthEl.className =
+          "pct-badge " + (totalBreadthPct >= 50 ? "pct-g" : "pct-r");
       }
 
       // ── Render: Tag filter row ────────────────────────
@@ -799,7 +920,10 @@
         const gainers = stocks.filter((h) => h.day_change >= 0).length;
         const gainPct = (gainers / stocks.length) * 100;
         return {
-          bg: `linear-gradient(to right, lightgreen 0%, lightgreen ${gainPct}%, lightcoral ${gainPct}%, lightcoral 100%)`
+          bg:
+            t === "x-cash"
+              ? "lightskyblue"
+              : `linear-gradient(to right, lightgreen 0%, lightgreen ${gainPct}%, lightcoral ${gainPct}%, lightcoral 100%)`
         };
       }
 
@@ -813,15 +937,17 @@
           ).length;
           const active = activeTagFilters.has(t);
           const { bg: nameBg } = tagColorStyle(t);
-          const borderColor = active ? "#2d5fc4" : "#2a2a2a";
+          const borderColor = active ? "#2d5fc4" : "#4a4a4a";
           const countBg = active ? "#2d5fc4" : "#161616";
           const nameColor = editModeOn
             ? "#fff"
             : active
               ? "#fff"
-              : holdingsLoaded
-                ? "#111111"
-                : "#fff";
+              : count === 0
+                ? "#fff"
+                : holdingsLoaded
+                  ? "#111111"
+                  : "#fff";
           const color = active ? "#fff" : "#d4d4d4";
           const dividerColor = active ? "rgba(255,255,255,.3)" : "#2a2a2a";
           const xColor = active ? "#fff" : "#d4d4d4";
@@ -854,12 +980,14 @@
           html += `</span>`;
         });
 
-        html += `<span style="display:inline-flex;align-items:stretch;border-radius:20px;overflow:hidden;border:1px solid #2a2a2a">`;
-        html += `<span class="chip add-tag-chip grouped-chip ${addTagModalOpen ? "active" : ""}" style="border:none;border-radius:0" onclick="openAddTagModal()"><span style="font-size:22px;line-height:0;position:relative;top:-2px">+</span><span>Add</span></span>`;
-        html += `<span class="chip edit-toggle-chip grouped-chip ${editModeOn ? "active" : ""}" style="border:none;border-left:1px solid #2a2a2a;border-radius:0" onclick="toggleEditMode()"><span style="font-size:13px;line-height:0;position:relative;top:-1px">✎</span><span>Edit</span></span>`;
-        html += `</span>`;
-
         document.getElementById("tag-filters").innerHTML = html;
+
+        const actionsHtml =
+          `<span style="display:inline-flex;align-items:stretch;border-radius:20px;overflow:hidden;border:1px solid #4a4a4a">` +
+          `<span class="chip add-tag-chip grouped-chip ${addTagModalOpen ? "active" : ""}" style="border:none;border-radius:0" onclick="openAddTagModal()"><span style="font-size:22px;line-height:0;position:relative;top:-2px">+</span><span>Add</span></span>` +
+          `<span class="chip edit-toggle-chip grouped-chip ${editModeOn ? "active" : ""}" style="border:none;border-left:1px solid #4a4a4a;border-radius:0" onclick="toggleEditMode()"><span style="font-size:13px;line-height:0;position:relative;top:-1px">✎</span><span>Edit</span></span>` +
+          `</span>`;
+        document.getElementById("tag-actions").innerHTML = actionsHtml;
       }
 
       function resetFilters() {
@@ -895,9 +1023,21 @@
           str: true,
           fmt: (v) => `<span class="sym">${v}</span>`
         },
-        { k: "quantity", l: "Qty.", num: true, fmt: (v) => v },
-        { k: "average_price", l: "Avg. cost", num: true, fmt: (v) => fc(v) },
+        {
+          k: "quantity",
+          l: "Qty.",
+          num: true,
+          fmt: (v) => `<span style="color:#5b8def">${v}</span>`
+        },
         { k: "_inv", l: "Invested", num: true, fmt: (v) => fi(v) },
+        {
+          k: "pnl",
+          l: "P&amp;L",
+          num: true,
+          fmt: (v) =>
+            `<span class="${v >= 0 ? "pp" : "pn"}">${v >= 0 ? "+" : "-"}${fi(v)}</span>`
+        },
+        { k: "average_price", l: "Avg. cost", num: true, fmt: (v) => fc(v) },
         {
           k: "last_price",
           l: "LTP",
@@ -906,18 +1046,11 @@
             `<span class="${r.day_change >= 0 ? "pos" : "neg"}">${fc(v)}</span>`
         },
         {
-          k: "pnl",
-          l: "P&amp;L",
-          num: true,
-          fmt: (v) =>
-            `<span class="${v >= 0 ? "pp" : "pn"}">${v >= 0 ? "+" : "-"}${fi(v)}</span>`
-        },
-        {
           k: "_ret",
           l: "Net chg.",
           num: true,
           fmt: (v) =>
-            `<span class="${v >= 0 ? "pos" : "neg"}">${Math.abs(v).toFixed(2)}%</span>`
+            `<span style="color:${v >= 0 ? "lightgreen" : "lightcoral"}">${Math.abs(v).toFixed(2)}%</span>`
         },
         {
           k: "day_change_percentage",
@@ -945,6 +1078,16 @@
         return key === "_ret" ? Math.abs(row[key]) : row[key];
       }
 
+      // Matches a tag name against a query, checking the whole name as well
+      // as each "-"-separated segment (e.g. "x-down" matches query "d")
+      function tagMatchesQuery(tagName, query) {
+        return tagName
+          .toLowerCase()
+          .replace(/\s+/g, "")
+          .split("-")
+          .some((seg) => seg.startsWith(query));
+      }
+
       function renderTable() {
         const rawQ = (document.getElementById("search")?.value || "")
           .toLowerCase()
@@ -958,9 +1101,7 @@
         const matchedTags = queries.length
           ? new Set(
               globalTags.filter((t) =>
-                queries.some((q) =>
-                  t.toLowerCase().replace(/\s+/g, "").startsWith(q)
-                )
+                queries.some((q) => tagMatchesQuery(t, q))
               )
             )
           : new Set();
@@ -989,11 +1130,11 @@
           if (queries.length) {
             const symLower = h.tradingsymbol.toLowerCase().replace(/\s+/g, "");
             const tags = stockTags[h.tradingsymbol] || [];
-            const symMatch = queries.some((q) => symLower.startsWith(q));
+            const symMatch = queries.some(
+              (q) => symLower.startsWith(q) || symLower.includes(q)
+            );
             const tagMatch = tags.some((t) =>
-              queries.some((q) =>
-                t.toLowerCase().replace(/\s+/g, "").startsWith(q)
-              )
+              queries.some((q) => tagMatchesQuery(t, q))
             );
             if (!symMatch && !tagMatch) return false;
           }
@@ -1026,6 +1167,9 @@
               ? '<span class="si">▲</span>'
               : '<span class="si">▼</span>';
         const cls = (k) => (sCol === k ? (sDir === 1 ? "asc" : "desc") : "");
+
+        const countEl = document.getElementById("search-count");
+        if (countEl) countEl.textContent = `${data.length}/${H.length}`;
 
         document.getElementById("th").innerHTML =
           "<tr>" +
@@ -1343,7 +1487,9 @@
           const isEditAction = e.target.closest(
             '[onclick^="renameTag"], [onclick^="deleteTag"], [onclick^="toggleEditMode"]'
           );
-          const isTagPill = e.target.closest("#tag-filters span");
+          const isTagPill = e.target.closest(
+            "#tag-filters span, #tag-actions span"
+          );
           if (!isEditAction && !inAnyModal && !isTagPill) {
             editModeOn = false;
             renderTagFilterRow();
