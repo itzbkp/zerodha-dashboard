@@ -4,6 +4,7 @@
     "dotenv": "^17.4.2"
   },
   "scripts": {
-    "start": "node launcher"
+    "start": "node index",
+    "generate": "node ./api/generate"
   }
 }

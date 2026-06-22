@@ -1,5 +1,6 @@
 require("dotenv").config({ quiet: true });
 const { neon } = require("@neondatabase/serverless");
+const MOCK_HOLDINGS_VARIANTS = require("./mock-holdings.json").variants;
 
 const http = require("http");
 const https = require("https");
@@ -14,6 +15,19 @@ const API_SECRET = process.env.API_SECRET;
 const sql = neon(process.env.DATABASE_URL);
 
 let ACCESS_TOKEN = "";
+
+// ── Mockdata Handling ───────────────────────────────
+const MOCK_HOLDINGS = false;
+let lastMockVariantIndex = -1;
+
+function pickMockVariant() {
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * MOCK_HOLDINGS_VARIANTS.length);
+  } while (idx === lastMockVariantIndex);
+  lastMockVariantIndex = idx;
+  return MOCK_HOLDINGS_VARIANTS[idx];
+}
 
 // Serve public files
 function serveFiles(req, res) {
@@ -129,6 +143,19 @@ function generateAccessToken(requestToken, callback) {
   req.end();
 }
 
+// Prompt for Login 
+function promptLoginRequired(res, message) {
+  console.log("❌ " + message);
+
+  res.writeHead(401, {
+    "Content-Type": "application/json",
+  });
+
+  res.end(JSON.stringify({
+    status: "Login-Required"
+  }));
+}
+
 // ── Tag DB helpers ──────────────────────────────────
 
 function readJsonBody(req) {
@@ -171,7 +198,7 @@ async function handleGetTags(req, res) {
     }
     sendJson(res, 200, { tags, stockTags });
   } catch (err) {
-    console.log("\n❌ GET /api/tags ERROR:");
+    console.log("❌ GET /api/tags ERROR:");
     console.log(err);
     sendJson(res, 500, { status: "error", message: err.message });
   }
@@ -194,7 +221,7 @@ async function handleCreateTag(req, res) {
     }
     sendJson(res, 200, { tag: rows[0] });
   } catch (err) {
-    console.log("\n❌ POST /api/tags ERROR:");
+    console.log("❌ POST /api/tags ERROR:");
     console.log(err);
     sendJson(res, 500, { status: "error", message: err.message });
   }
@@ -214,7 +241,7 @@ async function handleRenameTag(req, res, oldName) {
     if (rows.length === 0) return sendJson(res, 404, { status: "error", message: "Tag not found" });
     sendJson(res, 200, { tag: rows[0] });
   } catch (err) {
-    console.log("\n❌ PUT /api/tags ERROR:");
+    console.log("❌ PUT /api/tags ERROR:");
     console.log(err);
     sendJson(res, 500, { status: "error", message: err.message });
   }
@@ -226,7 +253,7 @@ async function handleDeleteTag(req, res, name) {
     await sql`DELETE FROM tags WHERE name = ${name}`;
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
-    console.log("\n❌ DELETE /api/tags ERROR:");
+    console.log("❌ DELETE /api/tags ERROR:");
     console.log(err);
     sendJson(res, 500, { status: "error", message: err.message });
   }
@@ -249,7 +276,7 @@ async function handleAssignStockTag(req, res) {
     `;
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
-    console.log("\n❌ POST /api/stock-tags ERROR:");
+    console.log("❌ POST /api/stock-tags ERROR:");
     console.log(err);
     sendJson(res, 500, { status: "error", message: err.message });
   }
@@ -269,7 +296,7 @@ async function handleUnassignStockTag(req, res) {
     await sql`DELETE FROM stock_tags WHERE symbol = ${symbol} AND tag_id = ${tagRows[0].id}`;
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
-    console.log("\n❌ DELETE /api/stock-tags ERROR:");
+    console.log("❌ DELETE /api/stock-tags ERROR:");
     console.log(err);
     sendJson(res, 500, { status: "error", message: err.message });
   }
@@ -278,21 +305,29 @@ async function handleUnassignStockTag(req, res) {
 // POST /api/cleanup { symbols: [...] } -> remove stock_tags rows for symbols not in the given list
 async function handleCleanup(req, res) {
   try {
+    if (MOCK_HOLDINGS) {
+      console.log("⚠️  Cleanup not required");
+      return sendJson(res, 200, { status: "ok", removedCount: 0, removedSymbols: [] });
+    }
     const body = await readJsonBody(req);
     const symbols = Array.isArray(body.symbols) ? body.symbols.filter(Boolean) : [];
     if (symbols.length === 0) {
       return sendJson(res, 400, { status: "error", message: "symbols array required" });
     }
 
+    const protectedSymbols = symbols.includes("LIQUIDCASE")
+      ? symbols
+      : [...symbols, "LIQUIDCASE"];
+
     const deleted = await sql`
       DELETE FROM stock_tags
-      WHERE symbol <> ALL(${symbols})
+      WHERE symbol <> ALL(${protectedSymbols})
       RETURNING symbol
     `;
-
+    console.log("✅ Cleanup Results:", deleted.length, deleted.map(r => r.symbol));
     sendJson(res, 200, { status: "ok", removedCount: deleted.length, removedSymbols: deleted.map(r => r.symbol) });
   } catch (err) {
-    console.log("\n❌ POST /api/cleanup ERROR:");
+    console.log("❌ POST /api/cleanup ERROR:");
     console.log(err);
     sendJson(res, 500, { status: "error", message: err.message });
   }
@@ -359,6 +394,18 @@ const server = http.createServer((req, res) => {
     return handleCleanup(req, res);
   }
 
+  if (tagPathname === "/portfolio/holdings" && req.method === "GET" && MOCK_HOLDINGS) {
+    const mockHoldings = pickMockVariant();
+    console.log("Mockdata Variant:", lastMockVariantIndex + 1);
+
+    return sendJson(res, 200, {
+      status: "success",
+      isStubbed: true,
+      stubVersion: lastMockVariantIndex,
+      data: mockHoldings,
+    });
+  }
+
   // Static routes
   if (
     req.url === "/" ||
@@ -408,7 +455,7 @@ const server = http.createServer((req, res) => {
 
         if (err) {
 
-          console.log("\n❌ TOKEN ERROR:");
+          console.log("❌ TOKEN ERROR:");
           console.log(err);
 
           res.writeHead(500, {
@@ -432,15 +479,7 @@ const server = http.createServer((req, res) => {
   // Require login first
   if (!ACCESS_TOKEN) {
 
-    res.writeHead(401, {
-      "Content-Type": "application/json",
-    });
-
-    res.end(JSON.stringify({
-      status: "Login-Required"
-    }));
-
-    return;
+    return promptLoginRequired(res, "Access token is required");
   }
 
   // Proxy request to Zerodha
@@ -477,6 +516,16 @@ const server = http.createServer((req, res) => {
 
       kiteRes.on("end", () => {
 
+        const response = JSON.parse(body);
+
+        if (
+          response?.status === "error" &&
+          response?.error_type === "TokenException"
+        ) {
+
+          return promptLoginRequired(res, response?.message);
+        }
+
         res.writeHead(
           kiteRes.statusCode,
           {
@@ -490,7 +539,7 @@ const server = http.createServer((req, res) => {
 
   proxy.on("error", (err) => {
 
-    console.log("\n❌ PROXY ERROR:");
+    console.log("❌ PROXY ERROR:");
     console.log(err);
 
     res.writeHead(502, {
