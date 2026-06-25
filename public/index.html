@@ -11,6 +11,7 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        border-collapse: collapse;
       }
 
       body {
@@ -37,13 +38,15 @@
         display: inline-flex;
         align-items: stretch;
         border-radius: 20px;
-        overflow: hidden;
+        position: relative;
       }
       .tag-pill-name {
         padding: 5px 12px;
         font-size: 13px;
         white-space: nowrap;
         display: flex;
+        border-top-left-radius: 20px;
+        border-bottom-left-radius: 20px;
         align-items: center;
       }
       .tag-pill-count {
@@ -51,6 +54,8 @@
         font-size: 13px;
         cursor: pointer;
         white-space: nowrap;
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
       }
       .tag-pill-action {
         display: flex;
@@ -58,6 +63,10 @@
         justify-content: center;
         padding: 0 10px;
         cursor: pointer;
+      }
+      .tag-pill-action:last-child {
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
       }
       .tag-pill-action .icon-sm {
         font-size: 13px;
@@ -68,20 +77,6 @@
         line-height: 0;
         position: relative;
         top: -1px;
-      }
-      .tag-actions-wrap {
-        display: inline-flex;
-        align-items: stretch;
-        border-radius: 20px;
-        overflow: hidden;
-        border: 1px solid #4a4a4a;
-      }
-      .tag-actions-wrap .chip {
-        border: none !important;
-        border-radius: 0;
-      }
-      .tag-actions-wrap .chip + .chip {
-        border-left: 1px solid #4a4a4a !important;
       }
       .icon-plus {
         font-size: 22px;
@@ -132,8 +127,14 @@
         max-width: 600px;
         margin: 0 16px;
       }
+      .search-group {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
       .search-box {
         position: relative;
+        flex: 1;
       }
       .search-box input {
         width: 100%;
@@ -194,6 +195,12 @@
         position: relative;
         top: -0.35px;
       }
+      .dot-stub {
+        background: #fbc02d;
+      }
+      .dot-err {
+        background: #f44336;
+      }
       .stat-clickable {
         cursor: pointer;
         transition: background 0.15s;
@@ -201,9 +208,11 @@
       .stat-clickable:hover {
         background: #1c1c1c;
       }
+      .stat-pnl-g.weight-active.breadth-active,
       .stat-pnl-g:hover {
         background: rgba(76, 175, 80, 0.12);
       }
+      .stat-pnl-r.weight-active.breadth-active,
       .stat-pnl-r:hover {
         background: rgba(244, 67, 54, 0.12);
       }
@@ -219,14 +228,19 @@
       #stat-current.weight-active {
         box-shadow: inset 0 -3px 0 0 #fbc02d;
       }
+      #stat-invested:hover .val,
+      #stat-invested.weight-active .val {
+        color: #387ed1;
+      }
+      #stat-current:hover .val,
+      #stat-current.weight-active .val {
+        color: #fbc02d;
+      }
       .stat-pnl-g.weight-active {
         box-shadow: inset 0 -3px 0 0 #4caf50;
       }
       .stat-pnl-r.weight-active {
         box-shadow: inset 0 -3px 0 0 #f44336;
-      }
-      .dot-err {
-        background: #f44336;
       }
       @keyframes pulse {
         0%,
@@ -236,6 +250,160 @@
         50% {
           opacity: 0.4;
         }
+      }
+
+      /* ── Profile menu ── */
+      .profile-menu-wrap {
+        position: relative;
+      }
+      .avatar-btn {
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #4a4a4a;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: opacity 0.15s;
+        overflow: hidden;
+        padding: 0;
+      }
+      .avatar-btn img,
+      .profile-avatar-lg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      .avatar-btn:hover {
+        opacity: 0.85;
+      }
+      .profile-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 200px;
+        background: #161616;
+        border: 1px solid #4a4a4a;
+        border-radius: 4px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        z-index: 150;
+        overflow: hidden;
+      }
+      .profile-menu.open {
+        display: block;
+      }
+      .profile-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border-bottom: 1px solid #4a4a4a;
+        cursor: pointer;
+        color: #d4d4d4;
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .profile-menu-item:hover {
+        background: #2a2a2a;
+      }
+      .profile-menu-item:last-child {
+        border-bottom: none;
+      }
+      .profile-menu-user {
+        padding: 8px 10px;
+      }
+      .profile-avatar-lg {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #4a4a4a;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .profile-user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .profile-user-name {
+        color: #e8e8e8;
+        font-weight: 500;
+        font-size: 13px;
+      }
+      .profile-user-sub {
+        color: #8a8a8a;
+        font-size: 11px;
+      }
+      .profile-menu-section-label {
+        font-size: 11px;
+        padding: 8px;
+        padding: 8px;
+      }
+      .profile-tags-actions {
+        cursor: default;
+        gap: 0;
+        padding: 0;
+        border-top: 1px solid #4a4a4a;
+      }
+      .profile-tags-actions:hover {
+        background: transparent;
+      }
+      .profile-tags-actions .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        gap: 8px;
+        border: none;
+        border-radius: 0;
+        border-right: 1px solid #4a4a4a;
+        padding: 8px;
+      }
+      .profile-tags-actions .chip:hover {
+        background: #2a2a2a;
+        border-color: #4a4a4a;
+        color: #d4d4d4;
+      }
+      .profile-tags-actions .chip:last-child {
+        border-right: none;
+      }
+      .profile-menu-help .info-icon {
+        font-size: 15px;
+        line-height: 1;
+      }
+      .modal-header-centered {
+        position: relative;
+        justify-content: center !important;
+      }
+      .modal-header-centered .modal-close {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .info-points {
+        list-style: disc;
+        padding-left: 20px;
+        font-size: 13px;
+        line-height: 20px;
+        color: #d4d4d4;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
       }
 
       /* ── Summary ── */
@@ -293,7 +461,7 @@
         align-self: flex-end;
         position: relative;
       }
-      .pct-badge .tooltip {
+      .tooltip {
         position: absolute;
         bottom: 100%;
         margin-bottom: 10px;
@@ -312,8 +480,8 @@
         pointer-events: none;
         z-index: 50;
       }
-      .pct-badge .tooltip::before,
-      .pct-badge .tooltip::after {
+      .tooltip::before,
+      .tooltip::after {
         content: "";
         position: absolute;
         top: 100%;
@@ -321,16 +489,17 @@
         transform: translateX(-50%);
         border-style: solid;
       }
-      .pct-badge .tooltip::before {
+      .tooltip::before {
         border-width: 6px;
         border-color: #4a4a4a transparent transparent transparent;
       }
-      .pct-badge .tooltip::after {
+      .tooltip::after {
         border-width: 5.75px;
         margin-top: -1px;
         border-color: #1a1a1a transparent transparent transparent;
       }
-      .pct-badge:hover .tooltip {
+      .pct-badge:hover .tooltip,
+      .tag-pill-wrap:hover .tooltip {
         opacity: 1;
         visibility: visible;
       }
@@ -353,19 +522,21 @@
       .table-container {
         margin: 16px 28px 20px;
       }
-      .filter-row {
+      .filter-row-tags {
         display: flex;
-        align-items: end;
-        justify-content: end;
-        gap: 6px;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
         margin-bottom: 12px;
         min-height: 64px;
       }
-      .filter-row-tags {
+      .tag-row {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 8px;
-        flex: 1;
+      }
+      .tag-row-measure {
+        display: inline-flex;
       }
       .filter-row-actions {
         position: absolute;
@@ -477,37 +648,6 @@
       .chip:hover {
         border-color: #5b8def;
         color: #5b8def;
-      }
-      .chip.add-tag-chip {
-        border-style: dashed;
-        border-color: #5a5a5a;
-      }
-      .chip.add-tag-chip:hover {
-        border-color: #5b8def;
-        color: #5b8def;
-      }
-      .chip.add-tag-chip.active {
-        background: #2d5fc4;
-        border-color: #2d5fc4;
-        border-style: solid;
-        color: #fff;
-      }
-      .chip.edit-toggle-chip:hover {
-        color: #5b8def;
-      }
-      .chip.edit-toggle-chip.active {
-        background: #2d5fc4;
-        color: #fff;
-      }
-      .grouped-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 6px 14px;
-        cursor: pointer;
-        user-select: none;
-        font-size: 13px;
       }
 
       /* ── Modals ── */
@@ -728,26 +868,79 @@
           <h1>Zerodha Dashboard</h1>
         </a>
         <div class="header-search">
-          <div class="search-box">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
-              autofocus
-              type="text"
-              id="search"
-              placeholder="Search by symbol or tag"
-              oninput="renderTable()"
-            />
-            <span class="search-count" id="search-count">0/0</span>
+          <div class="search-group">
+            <div class="search-box">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                autofocus
+                type="text"
+                id="search"
+                placeholder="Search by symbol or tag"
+                oninput="renderTable()"
+              />
+              <span class="search-count" id="search-count">0/0</span>
+            </div>
+            <div class="profile-menu-wrap">
+              <button
+                class="avatar-btn"
+                id="avatar-btn"
+                onclick="toggleProfileMenu(event)"
+              >
+                <span id="avatar-btn-initials">BP</span>
+              </button>
+              <div class="profile-menu" id="profile-menu">
+                <a
+                  class="profile-menu-item profile-menu-user"
+                  href="https://kite.zerodha.com/holdings/equity"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span class="profile-avatar-lg" id="profile-avatar-lg"
+                    ><span id="profile-avatar-lg-initials">BP</span></span
+                  >
+                  <span class="profile-user-info">
+                    <span class="profile-user-name" id="profile-user-name"
+                      >Barun Patro</span
+                    >
+                    <span class="profile-user-sub" id="profile-user-sub"
+                      >YD4828</span
+                    >
+                  </span>
+                </a>
+                <div class="profile-menu-section-label">Tags</div>
+                <div class="profile-menu-item profile-tags-actions">
+                  <span
+                    class="chip"
+                    id="menu-add-tag-chip"
+                    onclick="openAddTagModal()"
+                    ><span class="icon-plus">+</span><span>Add</span></span
+                  >
+                  <span
+                    class="chip"
+                    id="menu-edit-toggle-chip"
+                    onclick="toggleEditMode()"
+                    ><span class="icon-edit">✎</span><span>Edit</span></span
+                  >
+                </div>
+                <div
+                  class="profile-menu-item profile-menu-help"
+                  onclick="openInfoModal()"
+                >
+                  <span class="info-icon">ⓘ</span>
+                  <span>Help</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="status-pill" id="status-pill">
@@ -790,42 +983,43 @@
         <div
           class="stat stat-clickable"
           id="stat-day"
-          onclick="setWeightMode('day')"
+          onclick="cycleWeightMode('day', 'dayBr')"
         >
           <div class="lbl-row">
             <span class="lbl">Day's P&amp;L</span>
-            <span class="pct-badge pct-r" id="tdc-breadth">0.00 ▼</span>
           </div>
           <div class="val-row">
             <div class="val g" id="tdc">
               <span>0</span><span class="dec">.00</span>
             </div>
             <span class="pct-badge pct-g" id="tdc-pct">+0.00%</span>
+            <span class="pct-badge pct-r" id="tdc-breadth" style="display: none"
+              >0.00% ▼</span
+            >
           </div>
         </div>
         <div
           class="stat stat-clickable"
           id="stat-total"
-          onclick="setWeightMode('total')"
+          onclick="cycleWeightMode('total', 'totalBr')"
         >
           <div class="lbl-row">
             <span class="lbl">Total P&amp;L</span>
-            <span class="pct-badge pct-r" id="pnl-breadth">0.00 ▼</span>
           </div>
           <div class="val-row">
             <div class="val g" id="pnl">
               <span>0</span><span class="dec">.00</span>
             </div>
             <span class="pct-badge pct-g" id="pnl-pct">+0.00%</span>
+            <span class="pct-badge pct-r" id="pnl-breadth" style="display: none"
+              >0.00% ▼</span
+            >
           </div>
         </div>
       </div>
 
       <div class="table-container">
-        <div class="filter-row">
-          <div class="filter-row-tags" id="tag-filters"></div>
-          <div class="filter-row-actions" id="tag-actions"></div>
-        </div>
+        <div class="filter-row-tags" id="tag-filters"></div>
         <div class="table-wrap">
           <div class="table-scroll">
             <table>
@@ -948,12 +1142,26 @@
       </div>
     </div>
 
+    <!-- Info / Help modal -->
+    <div class="modal-overlay" id="info-modal">
+      <div class="modal">
+        <div class="modal-header modal-header-centered">
+          <h3>Information</h3>
+          <span class="modal-close" onclick="closeInfoModal()">×</span>
+        </div>
+        <ul class="info-points">
+          <li>Live holdings refresh automatically every few seconds.</li>
+          <li>Click a row to assign or edit tags for that stock.</li>
+          <li>Use the summary cards to switch between weightage views.</li>
+        </ul>
+      </div>
+    </div>
+
     <div class="toast-container" id="toast-container"></div>
 
     <script>
       // ── State ─────────────────────────────────────────
       let H = [];
-      let holdingsLoaded = false;
       let sCol = "day_change_percentage",
         sDir = -1;
       let retSortMode = 0; // 0 = no sort, 1 = red (losers) first, 2 = green (gainers) first
@@ -965,15 +1173,62 @@
       let addTagModalOpen = false;
       let globalTags = [];
       let stockTags = {};
-      let weightMode = "day"; // "invested" | "current" | "day" | "total"
+      let weightMode = "day"; // "invested" | "current" | "day" | "dayBr" | "total" | "totalBr"
+      let dayPref = "day"; // remembers last-used Day's P&L sub-mode: "day" | "dayBr"
+      let totalPref = "total"; // remembers last-used Total P&L sub-mode: "total" | "totalBr"
+
+      function applyWeightMode() {
+        ["invested", "current", "day", "total"].forEach((m) => {
+          const el = document.getElementById(`stat-${m}`);
+          if (!el) return;
+          const isActive =
+            m === weightMode ||
+            (m === "day" && weightMode === "dayBr") ||
+            (m === "total" && weightMode === "totalBr");
+          el.classList.toggle("weight-active", isActive);
+        });
+        updateTags();
+        renderTable();
+        updatePnlSummary();
+      }
 
       function setWeightMode(mode) {
         weightMode = mode;
-        ["invested", "current", "day", "total"].forEach((m) => {
-          const el = document.getElementById(`stat-${m}`);
-          if (el) el.classList.toggle("weight-active", m === mode);
-        });
-        renderTable();
+        if (mode === "invested" || mode === "current") {
+          dayPref = "day";
+          totalPref = "total";
+        }
+        applyWeightMode();
+      }
+
+      function cycleWeightMode(primary, breadth) {
+        const current = primary === "day" ? dayPref : totalPref;
+        const next = current === primary ? breadth : primary;
+        if (weightMode === primary || weightMode === breadth) {
+          if (primary === "day") dayPref = next;
+          else totalPref = next;
+          weightMode = next;
+        } else weightMode = current;
+        applyWeightMode();
+      }
+
+      function updatePnlSummary() {
+        const statDay = document.getElementById("stat-day");
+        const tdcPct = document.getElementById("tdc-pct");
+        const tdcBreadth = document.getElementById("tdc-breadth");
+        if (statDay && tdcPct && tdcBreadth) {
+          statDay.classList.toggle("breadth-active", dayPref === "dayBr");
+          tdcPct.style.display = dayPref === "dayBr" ? "none" : "";
+          tdcBreadth.style.display = dayPref === "dayBr" ? "" : "none";
+        }
+        const statTotal = document.getElementById("stat-total");
+        const pnlPct = document.getElementById("pnl-pct");
+        const pnlBreadth = document.getElementById("pnl-breadth");
+        if (statTotal && pnlPct && pnlBreadth) {
+          statTotal.classList.toggle("breadth-active", totalPref === "totalBr");
+          pnlPct.style.display = totalPref === "totalBr" ? "none" : "";
+          pnlBreadth.style.display = totalPref === "totalBr" ? "" : "none";
+        }
       }
 
       // ── localStorage cache ────────────────────────────
@@ -1033,7 +1288,7 @@
       const fi = (n) => Math.round(Math.abs(n)).toLocaleString("en-IN");
 
       // ── Status / clock ────────────────────────────────
-      function setStatus(ok) {
+      function setStatus(statusCode) {
         const d = new Date();
         const h = d.getHours() % 12 || 12;
         const m = String(d.getMinutes()).padStart(2, "0");
@@ -1042,7 +1297,7 @@
         const ts = `${String(h).padStart(2, "0")}:${m}:${s} ${ap}`;
         const pill = document.getElementById("status-pill");
         if (pill) {
-          pill.innerHTML = `<span class="status-dot ${ok ? "dot-live" : "dot-err"}" id="sdot"></span>${ok ? "Live" : "Offline"}&nbsp;<span class="status-sep">·</span>&nbsp;<span id="ts-text">${ts}</span>`;
+          pill.innerHTML = `<span class="status-dot ${statusCode === 0 ? "dot-err" : statusCode === 2 ? "dot-stub" : "dot-live"}" id="sdot"></span>${statusCode === 0 ? "Offline" : "Live"}&nbsp;<span class="status-sep">·</span>&nbsp;<span id="ts-text">${ts}</span>`;
         }
       }
 
@@ -1053,7 +1308,7 @@
           const json = await res.json();
           const isApiFailure = json.status === "error";
           if (json.status === "Login-Required") {
-            setStatus(false);
+            setStatus(0);
             window.location.href = "/login";
             return;
           }
@@ -1077,23 +1332,26 @@
             _wtCurrent: _totalCur !== 0 ? (h._cur / _totalCur) * 100 : 0,
             _wtDay:
               _totalDayPnl !== 0
-                ? ((h.day_change * h.quantity) / _totalDayPnl) * 100
+                ? ((h.day_change * h.quantity) / _totalDayPnl) *
+                  (_totalDayPnl > 0 ? 100 : -100)
                 : 0,
-            _wtTotal: _totalPnl !== 0 ? (h.pnl / _totalPnl) * 100 : 0
+            _wtTotal:
+              _totalPnl !== 0
+                ? (h.pnl / _totalPnl) * (_totalPnl > 0 ? 100 : -100)
+                : 0
           }));
-          holdingsLoaded = isApiFailure ? false : true;
-          setStatus(!isApiFailure);
+          setStatus(isApiFailure ? 0 : json.isStubbed ? 2 : 1);
           if (isApiFailure)
             showToast(json.message || "Failed to fetch holdings");
           renderSummary();
-          renderTagFilterRow();
+          updateTags();
           renderTable();
           if (!cleanupDone) {
             cleanupDone = true;
             runCleanup();
           }
         } catch (e) {
-          setStatus(false);
+          setStatus(0);
           showToast(e.message || "Failed to fetch holdings");
         }
       }
@@ -1112,6 +1370,36 @@
           }
         } catch (e) {
           showToast(e.message || "Failed to load tags");
+        }
+      }
+
+      // ── API: Profile ──────────────────────────────────
+      async function fetchProfile() {
+        try {
+          const res = await fetch("/user/profile");
+          const json = await res.json();
+          if (json.status === "error" || !json.data) return;
+          const p = json.data;
+
+          if (p.avatar_url) {
+            const initials = (p.user_shortname || p.user_name || "")
+              .split(" ")
+              .map((w) => w[0])
+              .filter(Boolean)
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
+
+            const btn = document.getElementById("avatar-btn");
+            if (btn)
+              btn.innerHTML = `<img src="${p.avatar_url}" alt="${initials}" />`;
+
+            const lg = document.getElementById("profile-avatar-lg");
+            if (lg)
+              lg.innerHTML = `<img src="${p.avatar_url}" alt="${initials}" />`;
+          }
+        } catch (e) {
+          // Silently keep the initials placeholder on failure.
         }
       }
 
@@ -1170,17 +1458,9 @@
             0
           )
         );
-        const dayGainerInv = H.filter((h) => h.day_change >= 0).reduce(
-          (a, h) => a + h._inv,
-          0
-        );
-        const dayLoserInv = H.filter((h) => h.day_change < 0).reduce(
-          (a, h) => a + h._inv,
-          0
-        );
-        const dayGainerPct = (dayGainerAmt / dayGainerInv) * 100 || 0;
-        const dayLoserPct = (dayLoserAmt / dayLoserInv) * 100 || 0;
-        tdcB.innerHTML = `${dcPct >= 0 ? "+" : ""}${dcPct.toFixed(2)}%<span class="tooltip"><span class="g">${dayGainerPct.toFixed(2)}% ↑</span> <span class="r">${dayLoserPct.toFixed(2)}% ↓</span></span>`;
+        const dayGainerPct = (dayGainerAmt / (tc - tdc)) * 100 || 0;
+        const dayLoserPct = (dayLoserAmt / (tc - tdc)) * 100 || 0;
+        tdcB.innerHTML = `${dcPct >= 0 ? "+" : ""}${dcPct.toFixed(2)}% ${dcPct >= 0 ? "▲" : "▼"}<span class="tooltip"><span class="g">${dayGainerPct.toFixed(2)}% ↑</span> <span class="r">${dayLoserPct.toFixed(2)}% ↓</span></span>`;
         tdcB.className = "pct-badge " + (tdc >= 0 ? "pct-g" : "pct-r");
 
         const pnlEl = document.getElementById("pnl");
@@ -1201,17 +1481,9 @@
         const netLoserAmt = Math.abs(
           H.filter((h) => h.pnl < 0).reduce((a, h) => a + h.pnl, 0)
         );
-        const netGainerInv = H.filter((h) => h.pnl >= 0).reduce(
-          (a, h) => a + h._inv,
-          0
-        );
-        const netLoserInv = H.filter((h) => h.pnl < 0).reduce(
-          (a, h) => a + h._inv,
-          0
-        );
-        const netGainerPct = (netGainerAmt / netGainerInv) * 100 || 0;
-        const netLoserPct = (netLoserAmt / netLoserInv) * 100 || 0;
-        pnlB.innerHTML = `${pp >= 0 ? "+" : ""}${pp.toFixed(2)}%<span class="tooltip"><span class="g">${netGainerPct.toFixed(2)}% ↑</span> <span class="r">${netLoserPct.toFixed(2)}% ↓</span></span>`;
+        const netGainerPct = (netGainerAmt / ti) * 100 || 0;
+        const netLoserPct = (netLoserAmt / ti) * 100 || 0;
+        pnlB.innerHTML = `${pp >= 0 ? "+" : ""}${pp.toFixed(2)}%  ${pp >= 0 ? "▲" : "▼"}<span class="tooltip"><span class="g">${netGainerPct.toFixed(2)}% ↑</span> <span class="r">${netLoserPct.toFixed(2)}% ↓</span></span>`;
         pnlB.className = "pct-badge " + (tp >= 0 ? "pct-g" : "pct-r");
 
         // ── Market breadth (with hover tooltip showing raw up/down counts) ──
@@ -1223,97 +1495,235 @@
 
         const dayLosers = totalCount - dayGainers;
         const tdcBreadthEl = document.getElementById("tdc-breadth");
-        tdcBreadthEl.innerHTML = `${dayBreadthPct.toFixed(2)} ${dayBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${dayGainers} ↑</span> <span class="r">${dayLosers} ↓</span></span>`;
+        tdcBreadthEl.innerHTML = `${dayBreadthPct.toFixed(2)}% ${dayBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${dayGainers} ↑</span> <span class="r">${dayLosers} ↓</span></span>`;
         tdcBreadthEl.className =
           "pct-badge " + (dayBreadthPct >= 50 ? "pct-g" : "pct-r");
 
         const totalLosers = totalCount - totalGainers;
         const pnlBreadthEl = document.getElementById("pnl-breadth");
-        pnlBreadthEl.innerHTML = `${totalBreadthPct.toFixed(2)} ${totalBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${totalGainers} ↑</span> <span class="r">${totalLosers} ↓</span></span>`;
+        pnlBreadthEl.innerHTML = `${totalBreadthPct.toFixed(2)}% ${totalBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${totalGainers} ↑</span> <span class="r">${totalLosers} ↓</span></span>`;
         pnlBreadthEl.className =
           "pct-badge " + (totalBreadthPct >= 50 ? "pct-g" : "pct-r");
+
+        updatePnlSummary();
       }
 
       // ── Render: Tag filter row ────────────────────────
-      function tagColorStyle(t) {
+      // Snaps a 0-100 percentage to the nearest upper band for gradient
+      // split points only (display values/tooltips remain exact).
+      function snapToBand(pct) {
+        const bands = [20, 40, 60, 80, 100];
+        for (const b of bands) {
+          if (pct <= b) return b;
+        }
+        return 100;
+      }
+
+      function tagWeightStyle(t) {
         const syms = Object.keys(stockTags).filter((s) =>
           (stockTags[s] || []).includes(t)
         );
+        const count = syms.length;
         const stocks = H.filter((h) => syms.includes(h.tradingsymbol));
-        if (!stocks.length) return { bg: "#161616" };
-        const gainers = stocks.filter((h) => h.day_change >= 0).length;
-        const gainPct = (gainers / stocks.length) * 100;
+
+        if (!stocks.length) {
+          return { bg: "#161616", textColor: "#fff", tooltip: "" };
+        }
+
+        if (weightMode === "invested" || weightMode === "current") {
+          const field =
+            weightMode === "invested" ? "_wtInvested" : "_wtCurrent";
+          const totalWt = stocks.reduce((a, h) => a + h[field], 0);
+          const [c1, c2] =
+            weightMode === "invested"
+              ? ["lightskyblue", "#5b8def"]
+              : ["khaki", "#fbc02d"];
+          const pct = Math.min(100, Math.max(0, totalWt));
+          const bandPct = snapToBand(pct);
+          const grad = `linear-gradient(to right, ${c2} 0%, ${c2} ${bandPct}%, ${c1} ${bandPct}%, ${c1} 100%)`;
+          const tooltipColor =
+            weightMode === "invested" ? "#5b8def" : "#fbc02d";
+          return {
+            bg: grad,
+            textColor: "#111111",
+            tooltip: [
+              `<span style="color:${tooltipColor}">${Math.abs(totalWt).toFixed(2)}%</span>`
+            ]
+          };
+        }
+
+        // day / dayBr / total / totalBr
+        const isBreadth = weightMode === "dayBr" || weightMode === "totalBr";
+        const isDayFamily = weightMode === "day" || weightMode === "dayBr";
+        const gainers = isDayFamily
+          ? stocks.filter((h) => h.day_change >= 0).length
+          : stocks.filter((h) => h.pnl >= 0).length;
+        const losers = count - gainers;
+        const field = isDayFamily ? "_wtDay" : "_wtTotal";
+        const totalWt = stocks.reduce((a, h) => a + h[field], 0);
+
+        if (isBreadth) {
+          const gainPct = (gainers / count) * 100;
+          const grad = `linear-gradient(to right, lightgreen 0%, lightgreen ${gainPct}%, lightcoral ${gainPct}%, lightcoral 100%)`;
+          return {
+            bg: grad,
+            textColor: "#111111",
+            tooltip: [
+              `<span style="color:#4caf50">${gainers} ↑</span>`,
+              `<span style="color:#f44336">${losers} ↓</span>`
+            ]
+          };
+        }
+
+        const isPos = totalWt >= 0;
+        const pct = Math.min(100, Math.max(0, Math.abs(totalWt)));
+        const bandPct = snapToBand(pct);
+        const [c1, c2] = isPos
+          ? ["lightgreen", "#4caf50"]
+          : ["lightcoral", "#f44336"];
+        const grad = `linear-gradient(to right, ${c2} 0%, ${c2} ${bandPct}%, ${c1} ${bandPct}%, ${c1} 100%)`;
+        const tooltipColor = isPos ? "#4caf50" : "#f44336";
         return {
-          bg:
-            t === "x-cash"
-              ? "plum"
-              : `linear-gradient(to right, lightgreen 0%, lightgreen ${gainPct}%, lightcoral ${gainPct}%, lightcoral 100%)`
+          bg: grad,
+          textColor: "#111111",
+          tooltip: [
+            `<span style="color:${tooltipColor}">${Math.abs(totalWt).toFixed(2)}%</span>`
+          ]
         };
       }
 
       function renderTagFilterRow() {
         const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
-        let html = "";
+        const pillsHtml = [];
 
         sorted.forEach((t) => {
-          const count = Object.keys(stockTags).filter(
-            (sym) =>
-              (stockTags[sym] || []).includes(t) &&
-              H.some((h) => h.tradingsymbol === sym)
-          ).length;
           const active = activeTagFilters.has(t);
-          const { bg: nameBg } = tagColorStyle(t);
           const borderColor = active ? "#2d5fc4" : "#4a4a4a";
-          const countBg = active ? "#2d5fc4" : "#161616";
-          const nameColor = editModeOn
-            ? "#fff"
-            : active
-              ? "#fff"
-              : count === 0
-                ? "#fff"
-                : holdingsLoaded
-                  ? "#111111"
-                  : "#fff";
+          const tagBg = active ? "#2d5fc4" : "#161616";
           const color = active ? "#fff" : "#d4d4d4";
           const dividerColor = active ? "rgba(255,255,255,.3)" : "#2a2a2a";
           const xColor = active ? "#fff" : "#d4d4d4";
-          const finalNameBg = active
-            ? "#2d5fc4"
-            : editModeOn
-              ? "#161616"
-              : nameBg;
 
-          html += `<span class="tag-pill-wrap" style="border:1px solid ${borderColor};background:${countBg}">`;
-          html += `<span class="tag-pill-name" style="color:${nameColor};cursor:${editModeOn ? "default" : "pointer"};background:${finalNameBg}" ${editModeOn ? "" : `onclick="toggleTagFilter('${t}')"`}>${t}</span>`;
-
-          if (!editModeOn) {
-            html += `<span class="tag-pill-count" data-count style="color:${color};border-left:1px solid ${dividerColor}" onclick="toggleTagFilter('${t}')">${count}</span>`;
-          }
+          let pillHtml = `<span class="tag-pill-wrap" style="border:1px solid ${borderColor};background:${tagBg}" id="tag-${t}"><span class="tooltip"></span>`;
+          pillHtml += `<span class="tag-pill-name" style="cursor:${editModeOn ? "default" : "pointer"};" ${editModeOn ? "" : `onclick="toggleTagFilter('${t}')"`}>${t}</span>`;
 
           if (editModeOn) {
             const renameColor = active ? xColor : "#5b8def";
             const renameBgEffect = active
               ? "transparent"
               : "rgba(91,141,239,.15)";
-            html += `<span class="tag-pill-action" onclick="renameTag('${t}')" title="Rename tag" style="border-left:1px solid ${dividerColor};color:${renameColor};background:${renameBgEffect}"><span class="icon-sm">✎</span></span>`;
+            pillHtml += `<span class="tag-pill-action" onclick="renameTag('${t}')" title="Rename tag" style="border-left:1px solid ${dividerColor};color:${renameColor};background:${renameBgEffect}"><span class="icon-sm">✎</span></span>`;
             const deleteColor = active ? xColor : "#f44336";
             const deleteBgEffect = active
               ? "transparent"
               : "rgba(244,67,54,.15)";
-            html += `<span class="tag-pill-action" onclick="deleteTag('${t}')" style="border-left:1px solid ${dividerColor};color:${deleteColor};background:${deleteBgEffect}"><span class="icon-x">×</span></span>`;
-          }
+            pillHtml += `<span class="tag-pill-action" onclick="deleteTag('${t}')" style="border-left:1px solid ${dividerColor};color:${deleteColor};background:${deleteBgEffect}"><span class="icon-x">×</span></span>`;
+          } else
+            pillHtml += `<span class="tag-pill-count" style="color:${color};border-left:1px solid ${dividerColor}" onclick="toggleTagFilter('${t}')">0</span>`;
 
-          html += `</span>`;
+          pillHtml += "</span>";
+          pillsHtml.push(pillHtml);
         });
 
-        document.getElementById("tag-filters").innerHTML = html;
+        layoutTagRows(pillsHtml);
+        syncProfileMenuTagActions();
+        updateTags();
+      }
 
-        const actionsHtml =
-          `<span class="tag-actions-wrap">` +
-          `<span class="chip add-tag-chip grouped-chip ${addTagModalOpen ? "active" : ""}" onclick="openAddTagModal()"><span class="icon-plus">+</span><span>Add</span></span>` +
-          `<span class="chip edit-toggle-chip grouped-chip ${editModeOn ? "active" : ""}" onclick="toggleEditMode()"><span class="icon-edit">✎</span><span>Edit</span></span>` +
-          `</span>`;
-        document.getElementById("tag-actions").innerHTML = actionsHtml;
+      function updateTags() {
+        const symbols = Object.keys(stockTags);
+        globalTags.forEach((t) => {
+          const syms = symbols.filter(
+            (s) =>
+              (stockTags[s] || []).includes(t) &&
+              H.some((h) => h.tradingsymbol === s)
+          );
+          const count = syms.length;
+          const active = activeTagFilters.has(t);
+          const isXCash = t === "x-cash" && count > 0;
+          const useWeightStyle =
+            !isXCash || weightMode === "invested" || weightMode === "current";
+          const isBreadthMode =
+            weightMode === "dayBr" || weightMode === "totalBr";
+          const weightStyle = tagWeightStyle(t);
+          const {
+            bg: weightBg,
+            textColor: weightTextColor,
+            tooltip: weightTooltip
+          } = useWeightStyle
+            ? weightStyle
+            : {
+                bg: "plum",
+                textColor: "#111111",
+                tooltip: isBreadthMode ? [] : [weightStyle.tooltip[0]]
+              };
+          const nameBg = active ? "#2d5fc4" : editModeOn ? "#161616" : weightBg;
+          const nameColor =
+            !editModeOn && !active && count > 0 ? weightTextColor : "#fff";
+
+          const tag = document.getElementById(`tag-${t}`);
+          tag.querySelector(".tag-pill-name").style.color = nameColor;
+          tag.querySelector(".tag-pill-name").style.background = nameBg;
+          if (tag.querySelector(".tag-pill-count"))
+            tag.querySelector(".tag-pill-count").textContent = count;
+          if (!editModeOn && count > 0 && weightTooltip.length > 0) {
+            tag.querySelector(".tooltip").style.display = "block";
+            tag.querySelector(".tooltip").innerHTML = weightTooltip.join(" ");
+          } else tag.querySelector(".tooltip").style.display = "none";
+        });
+      }
+
+      function syncProfileMenuTagActions() {
+        const addChip = document.getElementById("menu-add-tag-chip");
+        const editChip = document.getElementById("menu-edit-toggle-chip");
+        if (addChip) addChip.classList.toggle("active", addTagModalOpen);
+        if (editChip) editChip.classList.toggle("active", editModeOn);
+      }
+
+      // Measures natural flex-wrap line breaks for the pills, then rebuilds
+      // them into explicit per-row containers: every full row gets
+      // justify-content:space-between, while the last (possibly partial)
+      // row gets justify-content:flex-start.
+      function layoutTagRows(pillsHtml) {
+        const container = document.getElementById("tag-filters");
+        if (!pillsHtml.length) {
+          container.innerHTML = "";
+          return;
+        }
+
+        // Render flat (wrapping) first so we can measure natural rows.
+        container.style.flexDirection = "row";
+        container.style.flexWrap = "wrap";
+        container.innerHTML = pillsHtml
+          .map((h) => `<span class="tag-row-measure">${h}</span>`)
+          .join("");
+
+        const items = Array.from(container.children);
+        const rows = [];
+        let currentTop = null;
+        let currentRow = [];
+        items.forEach((el, i) => {
+          const top = el.offsetTop;
+          if (currentTop === null || Math.abs(top - currentTop) > 2) {
+            if (currentRow.length) rows.push(currentRow);
+            currentRow = [pillsHtml[i]];
+            currentTop = top;
+          } else {
+            currentRow.push(pillsHtml[i]);
+          }
+        });
+        if (currentRow.length) rows.push(currentRow);
+
+        // Rebuild into explicit row containers.
+        container.style.flexDirection = "column";
+        container.style.flexWrap = "nowrap";
+        container.innerHTML = rows
+          .map((row, i) => {
+            const isLast = i === rows.length - 1;
+            const justify = isLast ? "flex-start" : "space-between";
+            return `<div class="tag-row" style="justify-content:${justify}">${row.join("")}</div>`;
+          })
+          .join("");
       }
 
       function resetFilters() {
@@ -1329,6 +1739,7 @@
       function toggleEditMode() {
         editModeOn = !editModeOn;
         renderTagFilterRow();
+        closeProfileMenu();
       }
 
       function toggleTagFilter(t) {
@@ -1375,12 +1786,14 @@
             if (weightMode === "current") {
               return `<span style="color:khaki">${r._wtCurrent.toFixed(2)}%</span>`;
             }
-            if (weightMode === "total") {
-              const val = r._wtTotal;
-              return `<span style="color:${val >= 0 ? "lightgreen" : "lightcoral"}">${val >= 0 ? "+" : ""}${val.toFixed(2)}%</span>`;
+            if (weightMode === "day" || weightMode === "dayBr") {
+              const val = r._wtDay;
+              return `<span style="color:${val >= 0 ? "lightgreen" : "lightcoral"}">${Math.abs(val).toFixed(2)}%</span>`;
             }
-            const val = r._wtDay;
-            return `<span style="color:${val >= 0 ? "lightgreen" : "lightcoral"}">${val >= 0 ? "+" : ""}${val.toFixed(2)}%</span>`;
+            if (weightMode === "total" || weightMode === "totalBr") {
+              const val = r._wtTotal;
+              return `<span style="color:${val >= 0 ? "lightgreen" : "lightcoral"}">${Math.abs(val).toFixed(2)}%</span>`;
+            }
           }
         },
         {
@@ -1431,7 +1844,9 @@
         if (key === "_wt") {
           if (weightMode === "invested") return row._wtInvested;
           if (weightMode === "current") return row._wtCurrent;
-          if (weightMode === "total") return row._wtTotal;
+          if (weightMode === "day" || weightMode === "dayBr") return row._wtDay;
+          if (weightMode === "total" || weightMode === "totalBr")
+            return row._wtTotal;
           return row._wtDay;
         }
         return row[key];
@@ -1570,6 +1985,32 @@
           .join("");
       }
 
+      // ── Profile menu ──────────────────────────────────
+      function toggleProfileMenu(e) {
+        e.stopPropagation();
+        document.getElementById("profile-menu").classList.toggle("open");
+      }
+
+      function closeProfileMenu() {
+        document.getElementById("profile-menu").classList.remove("open");
+      }
+
+      // ── Modal: Info / Help ────────────────────────────
+      function openInfoModal() {
+        closeProfileMenu();
+        document.getElementById("info-modal").classList.add("open");
+      }
+
+      function closeInfoModal() {
+        document.getElementById("info-modal").classList.remove("open");
+        focusSearch();
+      }
+
+      document.getElementById("info-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("info-modal"))
+          closeInfoModal();
+      });
+
       // ── Modal: Assign tags ────────────────────────────
       function openAssignModal(symbol) {
         editingSymbol = symbol;
@@ -1652,7 +2093,8 @@
         addTagModalOpen = true;
         document.getElementById("new-tag-input").value = "";
         document.getElementById("addtag-modal").classList.add("open");
-        renderTagFilterRow();
+        syncProfileMenuTagActions();
+        closeProfileMenu();
         setTimeout(() => document.getElementById("new-tag-input").focus(), 50);
       }
 
@@ -1690,7 +2132,7 @@
       function closeAddTagModal() {
         addTagModalOpen = false;
         document.getElementById("addtag-modal").classList.remove("open");
-        renderTagFilterRow();
+        syncProfileMenuTagActions();
         focusSearch();
       }
 
@@ -1848,7 +2290,8 @@
           "assign-modal",
           "addtag-modal",
           "renametag-modal",
-          "delete-confirm-modal"
+          "delete-confirm-modal",
+          "info-modal"
         ].some((id) => document.getElementById(id).classList.contains("open"));
       }
 
@@ -1868,6 +2311,9 @@
         const inAnyModal = e.target.closest(".modal-overlay");
         if (!inAnyModal) focusSearch();
 
+        const inProfileMenu = e.target.closest(".profile-menu-wrap");
+        if (!inProfileMenu) closeProfileMenu();
+
         if (editModeOn) {
           const isEditAction = e.target.closest(
             '[onclick^="renameTag"], [onclick^="deleteTag"], [onclick^="toggleEditMode"]'
@@ -1883,11 +2329,12 @@
       });
 
       // ── Init ──────────────────────────────────────────
-      setStatus(true); // show clock immediately before first fetch
+      setStatus(1); // show clock immediately before first fetch
       setWeightMode("day"); // default weight mode
       focusSearch();
-      setInterval(fetchHoldings, 5000);
+      setInterval(fetchHoldings, 1000);
       if (loadTagsFromCache()) renderTagFilterRow();
+      fetchProfile();
       fetchHoldings();
       loadTagsFromServer();
     </script>

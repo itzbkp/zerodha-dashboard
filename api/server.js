@@ -1,12 +1,15 @@
 require("dotenv").config({ quiet: true });
 const { neon } = require("@neondatabase/serverless");
-const MOCK_HOLDINGS_VARIANTS = require("./mock-holdings.json").variants;
+const YahooFinance = require("yahoo-finance2").default;
+const MOCK_HOLDINGS = require("./mock-holdings.json");
 
 const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+
+const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 const KITE_HOST = "api.kite.trade";
 
@@ -15,18 +18,70 @@ const API_SECRET = process.env.API_SECRET;
 const sql = neon(process.env.DATABASE_URL);
 
 let ACCESS_TOKEN = "";
+const mockHoldings = false;
 
-// ── Mockdata Handling ───────────────────────────────
-const MOCK_HOLDINGS = false;
-let lastMockVariantIndex = -1;
+// ── Market hours check (NSE/BSE) ────────────────────
+function isIndianMarketOpen() {
+  const nowIST = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+  );
+  const day = nowIST.getDay(); // 0 = Sunday, 6 = Saturday
+  if (day === 0 || day === 6) return false;
 
-function pickMockVariant() {
-  let idx;
-  do {
-    idx = Math.floor(Math.random() * MOCK_HOLDINGS_VARIANTS.length);
-  } while (idx === lastMockVariantIndex);
-  lastMockVariantIndex = idx;
-  return MOCK_HOLDINGS_VARIANTS[idx];
+  const minutesNow = nowIST.getHours() * 60 + nowIST.getMinutes();
+  const marketOpen = 9 * 60 + 15; // 9:15 AM
+  const marketClose = 15 * 60 + 30; // 3:30 PM
+  return minutesNow >= marketOpen && minutesNow <= marketClose;
+}
+
+// ── Yahoo Finance live-quote enrichment ─────────────
+function yahooSymbolFor(holding) {
+  const suffix = holding.exchange === "BSE" ? ".BO" : ".NS";
+  return `${holding.tradingsymbol}${suffix}`;
+}
+
+async function enrichWithLiveQuotes(holdings) {
+  if (!Array.isArray(holdings) || holdings.length === 0) return holdings;
+
+  if (!isIndianMarketOpen() && !mockHoldings) {
+    return holdings;
+  }
+
+  const yahooSymbols = holdings.map(yahooSymbolFor);
+
+  let quoteMap = {};
+  try {
+
+    quoteMap = await yahooFinance.quote(yahooSymbols, { return: "object" });
+  } catch (err) {
+    // Whole batch call failed (network, rate limit, etc) — just
+    // return the original Kite data untouched.
+    console.log("⚠️  Yahoo Finance batch quote failed:", err.message);
+    return holdings;
+  }
+
+  return holdings.map((h) => {
+    const ySym = yahooSymbolFor(h);
+    const q = quoteMap[ySym];
+
+    if (!q || typeof q.regularMarketPrice !== "number") return h;
+
+    const lastPrice = q.regularMarketPrice;
+    const dayChange =
+      typeof q.regularMarketChange === "number" ? q.regularMarketChange : h.day_change;
+    const dayChangePct =
+      typeof q.regularMarketChangePercent === "number"
+        ? q.regularMarketChangePercent
+        : h.day_change_percentage;
+
+    return {
+      ...h,
+      last_price: lastPrice,
+      day_change: dayChange,
+      day_change_percentage: dayChangePct,
+      pnl: (lastPrice - h.average_price) * h.quantity,
+    };
+  });
 }
 
 // Serve public files
@@ -305,7 +360,7 @@ async function handleUnassignStockTag(req, res) {
 // POST /api/cleanup { symbols: [...] } -> remove stock_tags rows for symbols not in the given list
 async function handleCleanup(req, res) {
   try {
-    if (MOCK_HOLDINGS) {
+    if (mockHoldings) {
       console.log("⚠️  Cleanup not required");
       return sendJson(res, 200, { status: "ok", removedCount: 0, removedSymbols: [] });
     }
@@ -334,9 +389,15 @@ async function handleCleanup(req, res) {
 }
 
 // Create HTTP server
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
 
-  console.log(`${req.method} ${req.url}`);
+  const requestStartedAt = Date.now();
+
+  res.on("finish", () => {
+    const elapsedMs = Date.now() - requestStartedAt;
+    const statusCode = ["/portfolio/holdings", "/user/profile"].includes(req.url) && mockHoldings ? 304 : res.statusCode;
+    console.log(`${req.method} ${req.url} → ${statusCode} (${elapsedMs}ms)`);
+  });
 
   // CORS
   res.setHeader(
@@ -394,15 +455,21 @@ const server = http.createServer((req, res) => {
     return handleCleanup(req, res);
   }
 
-  if (tagPathname === "/portfolio/holdings" && req.method === "GET" && MOCK_HOLDINGS) {
-    const mockHoldings = pickMockVariant();
-    console.log("Mockdata Variant:", lastMockVariantIndex + 1);
-
+  if (tagPathname === "/portfolio/holdings" && req.method === "GET" && mockHoldings) {
+    const mockHoldings = await enrichWithLiveQuotes(MOCK_HOLDINGS);
     return sendJson(res, 200, {
       status: "success",
       isStubbed: true,
-      stubVersion: lastMockVariantIndex,
       data: mockHoldings,
+    });
+  }
+
+  if (tagPathname === "/user/profile" && req.method === "GET" && mockHoldings) {
+    return sendJson(res, 200, {
+      status: "success",
+      data: {
+        avatar_url: "https://s3.ap-south-1.amazonaws.com/zerodha-kite-blobs/avatars/zYRMQSdS4xxhhTeGgtzK5pfeAQY8Vfr0.png",
+      },
     });
   }
 
@@ -514,7 +581,7 @@ const server = http.createServer((req, res) => {
         body += chunk;
       });
 
-      kiteRes.on("end", () => {
+      kiteRes.on("end", async () => {
 
         const response = JSON.parse(body);
 
@@ -524,6 +591,31 @@ const server = http.createServer((req, res) => {
         ) {
 
           return promptLoginRequired(res, response?.message);
+        }
+
+        // ── Live-quote enrichment for holdings only ──────────────
+        const parsedHoldingsUrl = new URL(req.url, "http://placeholder.local");
+        const isHoldingsRoute = parsedHoldingsUrl.pathname === "/portfolio/holdings"
+
+        if (
+          isHoldingsRoute &&
+          response?.status === "success" &&
+          Array.isArray(response.data)
+        ) {
+          try {
+            response.data = await enrichWithLiveQuotes(response.data);
+          } catch (err) {
+            console.log(
+              "⚠️  Unable to fetch live quotes from Yahoo Finance, hence serving from Kite:",
+              err.message
+            );
+          }
+
+          res.writeHead(kiteRes.statusCode, {
+            "Content-Type": "application/json",
+          });
+          res.end(JSON.stringify(response));
+          return;
         }
 
         res.writeHead(
