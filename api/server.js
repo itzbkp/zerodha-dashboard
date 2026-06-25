@@ -57,6 +57,7 @@ function serveFiles(req, res) {
     const contentTypes = {
       ".html": "text/html",
       ".ico": "image/x-icon",
+      ".js": "application/javascript",
     };
 
     res.writeHead(200, {
