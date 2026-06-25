@@ -854,6 +854,29 @@
         }
       }
     </style>
+    <script>
+      window.va =
+        window.va ||
+        function () {
+          (window.vaq = window.vaq || []).push(arguments);
+        };
+      window.si =
+        window.si ||
+        function () {
+          (window.siq = window.siq || []).push(arguments);
+        };
+
+      if (location.hostname !== "localhost") {
+        const insightsScript = document.createElement("script");
+        const speedInsightsScript = document.createElement("script");
+        insightsScript.defer = true;
+        speedInsightsScript.defer = true;
+        insightsScript.src = "/_vercel/insights/script.js";
+        speedInsightsScript.src = "/_vercel/speed-insights/script.js";
+        document.head.appendChild(insightsScript);
+        document.head.appendChild(speedInsightsScript);
+      }
+    </script>
   </head>
   <body>
     <div id="dashboard">
@@ -2337,19 +2360,6 @@
       fetchProfile();
       fetchHoldings();
       loadTagsFromServer();
-      window.va =
-        window.va ||
-        function () {
-          (window.vaq = window.vaq || []).push(arguments);
-        };
-    </script>
-    <script>
-      if (location.hostname !== "localhost") {
-        const script = document.createElement("script");
-        script.defer = true;
-        script.src = "/_vercel/insights/script.js";
-        document.head.appendChild(script);
-      }
     </script>
   </body>
 </html>
