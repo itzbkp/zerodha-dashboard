@@ -2337,6 +2337,19 @@
       fetchProfile();
       fetchHoldings();
       loadTagsFromServer();
+      window.va =
+        window.va ||
+        function () {
+          (window.vaq = window.vaq || []).push(arguments);
+        };
+    </script>
+    <script>
+      if (location.hostname !== "localhost") {
+        const script = document.createElement("script");
+        script.defer = true;
+        script.src = "/_vercel/insights/script.js";
+        document.head.appendChild(script);
+      }
     </script>
   </body>
 </html>
