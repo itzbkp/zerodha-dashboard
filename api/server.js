@@ -13,24 +13,19 @@ const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 const KITE_HOST = "api.kite.trade";
 
-const API_KEY = process.env.API_KEY;
-const API_SECRET = process.env.API_SECRET;
 const sql = neon(process.env.DATABASE_URL);
-
-let ACCESS_TOKEN = "";
-const mockHoldings = false;
 
 // ── Market hours check (NSE/BSE) ────────────────────
 function isIndianMarketOpen() {
   const nowIST = new Date(
     new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
   );
-  const day = nowIST.getDay(); // 0 = Sunday, 6 = Saturday
+  const day = nowIST.getDay();
   if (day === 0 || day === 6) return false;
 
   const minutesNow = nowIST.getHours() * 60 + nowIST.getMinutes();
-  const marketOpen = 9 * 60 + 15; // 9:15 AM
-  const marketClose = 15 * 60 + 30; // 3:30 PM
+  const marketOpen = 9 * 60 + 15;
+  const marketClose = 15 * 60 + 30;
   return minutesNow >= marketOpen && minutesNow <= marketClose;
 }
 
@@ -40,10 +35,10 @@ function yahooSymbolFor(holding) {
   return `${holding.tradingsymbol}${suffix}`;
 }
 
-async function enrichWithLiveQuotes(holdings) {
+async function enrichWithLiveQuotes(holdings, isStubbed) {
   if (!Array.isArray(holdings) || holdings.length === 0) return holdings;
 
-  if (!isIndianMarketOpen() && !mockHoldings) {
+  if (!isIndianMarketOpen() && !isStubbed) {
     return holdings;
   }
 
@@ -54,9 +49,7 @@ async function enrichWithLiveQuotes(holdings) {
 
     quoteMap = await yahooFinance.quote(yahooSymbols, { return: "object" });
   } catch (err) {
-    // Whole batch call failed (network, rate limit, etc) — just
-    // return the original Kite data untouched.
-    console.log("⚠️  Yahoo Finance batch quote failed:", err.message);
+    console.log("⚠️  Unable to fetch live quotes from Yahoo Finance:", err.message);
     return holdings;
   }
 
@@ -84,7 +77,6 @@ async function enrichWithLiveQuotes(holdings) {
   });
 }
 
-// Serve public files
 function serveFiles(req, res) {
 
   const publicDir = path.join(__dirname, "..", "public");
@@ -124,16 +116,55 @@ function serveFiles(req, res) {
   });
 }
 
-// Generate access token
-function generateAccessToken(requestToken, callback) {
+// ── Cookie / session helpers ─────────────────────────
+function parseCookies(req) {
+  const header = req.headers.cookie;
+  const cookies = {};
+  if (!header) return cookies;
+  header.split(";").forEach((pair) => {
+    const idx = pair.indexOf("=");
+    if (idx === -1) return;
+    const key = pair.slice(0, idx).trim();
+    const value = pair.slice(idx + 1).trim();
+    if (key) cookies[key] = decodeURIComponent(value);
+  });
+  return cookies;
+}
+
+function getSession(req) {
+  const cookies = parseCookies(req);
+  const raw = cookies["kite_session"];
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    return null;
+  }
+}
+
+function isLocalhost(req) {
+  const host = (req.headers.host || "").split(":")[0];
+  return host === "localhost";
+}
+
+async function getUserCredentials(userId, req) {
+  if (!userId) return null;
+  const rows = await sql`SELECT api_key, api_secret FROM users WHERE id = ${userId}`;
+  return rows[0] ? isLocalhost(req) ? {
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET,
+  } : rows[0] : null;
+}
+
+function generateAccessToken(apiKey, apiSecret, requestToken, callback) {
 
   const checksum = crypto
     .createHash("sha256")
-    .update(API_KEY + requestToken + API_SECRET)
+    .update(apiKey + requestToken + apiSecret)
     .digest("hex");
 
   const postData =
-    `api_key=${encodeURIComponent(API_KEY)}` +
+    `api_key=${encodeURIComponent(apiKey)}` +
     `&request_token=${encodeURIComponent(requestToken)}` +
     `&checksum=${encodeURIComponent(checksum)}`;
 
@@ -173,10 +204,7 @@ function generateAccessToken(requestToken, callback) {
           parsed.data.access_token
         ) {
 
-          ACCESS_TOKEN =
-            parsed.data.access_token;
-
-          callback(null, ACCESS_TOKEN);
+          callback(null, parsed.data.access_token);
 
         } else {
 
@@ -198,7 +226,6 @@ function generateAccessToken(requestToken, callback) {
   req.end();
 }
 
-// Prompt for Login 
 function promptLoginRequired(res, message) {
   console.log("❌ " + message);
 
@@ -235,15 +262,15 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
-// GET /api/tags -> { tags: [{id, name}], stockTags: { SYMBOL: [tagName, ...] } }
-async function handleGetTags(req, res) {
+async function handleGetTags(res, userId) {
   try {
     const [tags, rows] = await Promise.all([
-      sql`SELECT id, name FROM tags ORDER BY name ASC`,
+      sql`SELECT id, name FROM tags WHERE user_id = ${userId} ORDER BY name ASC`,
       sql`
         SELECT st.symbol, t.name
         FROM stock_tags st
         JOIN tags t ON t.id = st.tag_id
+        WHERE st.user_id = ${userId}
       `,
     ]);
     const stockTags = {};
@@ -259,16 +286,15 @@ async function handleGetTags(req, res) {
   }
 }
 
-// POST /api/tags { name } -> create a new global tag
-async function handleCreateTag(req, res) {
+async function handleCreateTag(req, res, userId) {
   try {
     const body = await readJsonBody(req);
     const name = (body.name || "").trim();
     if (!name) return sendJson(res, 400, { status: "error", message: "Tag name required" });
 
     const rows = await sql`
-      INSERT INTO tags (name) VALUES (${name})
-      ON CONFLICT (name) DO NOTHING
+      INSERT INTO tags (name, user_id) VALUES (${name}, ${userId})
+      ON CONFLICT (user_id, name) DO NOTHING
       RETURNING id, name
     `;
     if (rows.length === 0) {
@@ -282,15 +308,14 @@ async function handleCreateTag(req, res) {
   }
 }
 
-// PUT /api/tags/:name { newName } -> rename a tag
-async function handleRenameTag(req, res, oldName) {
+async function handleRenameTag(req, res, oldName, userId) {
   try {
     const body = await readJsonBody(req);
     const newName = (body.newName || "").trim();
     if (!newName) return sendJson(res, 400, { status: "error", message: "newName required" });
 
     const rows = await sql`
-      UPDATE tags SET name = ${newName} WHERE name = ${oldName}
+      UPDATE tags SET name = ${newName} WHERE name = ${oldName} AND user_id = ${userId}
       RETURNING id, name
     `;
     if (rows.length === 0) return sendJson(res, 404, { status: "error", message: "Tag not found" });
@@ -302,10 +327,9 @@ async function handleRenameTag(req, res, oldName) {
   }
 }
 
-// DELETE /api/tags/:name -> delete a tag (and its assignments via cascade)
-async function handleDeleteTag(req, res, name) {
+async function handleDeleteTag(res, name, userId) {
   try {
-    await sql`DELETE FROM tags WHERE name = ${name}`;
+    await sql`DELETE FROM tags WHERE name = ${name} AND user_id = ${userId}`;
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
     console.log("❌ DELETE /api/tags ERROR:");
@@ -314,20 +338,19 @@ async function handleDeleteTag(req, res, name) {
   }
 }
 
-// POST /api/stock-tags { symbol, tag } -> assign tag to stock
-async function handleAssignStockTag(req, res) {
+async function handleAssignStockTag(req, res, userId) {
   try {
     const body = await readJsonBody(req);
     const symbol = (body.symbol || "").trim();
     const tag = (body.tag || "").trim();
     if (!symbol || !tag) return sendJson(res, 400, { status: "error", message: "symbol and tag required" });
 
-    const tagRows = await sql`SELECT id FROM tags WHERE name = ${tag}`;
+    const tagRows = await sql`SELECT id FROM tags WHERE name = ${tag} AND user_id = ${userId}`;
     if (tagRows.length === 0) return sendJson(res, 404, { status: "error", message: "Tag not found" });
 
     await sql`
-      INSERT INTO stock_tags (symbol, tag_id) VALUES (${symbol}, ${tagRows[0].id})
-      ON CONFLICT (symbol, tag_id) DO NOTHING
+      INSERT INTO stock_tags (symbol, tag_id, user_id) VALUES (${symbol}, ${tagRows[0].id}, ${userId})
+      ON CONFLICT (user_id, symbol, tag_id) DO NOTHING
     `;
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
@@ -337,18 +360,17 @@ async function handleAssignStockTag(req, res) {
   }
 }
 
-// DELETE /api/stock-tags { symbol, tag } -> unassign tag from stock
-async function handleUnassignStockTag(req, res) {
+async function handleUnassignStockTag(req, res, userId) {
   try {
     const body = await readJsonBody(req);
     const symbol = (body.symbol || "").trim();
     const tag = (body.tag || "").trim();
     if (!symbol || !tag) return sendJson(res, 400, { status: "error", message: "symbol and tag required" });
 
-    const tagRows = await sql`SELECT id FROM tags WHERE name = ${tag}`;
+    const tagRows = await sql`SELECT id FROM tags WHERE name = ${tag} AND user_id = ${userId}`;
     if (tagRows.length === 0) return sendJson(res, 404, { status: "error", message: "Tag not found" });
 
-    await sql`DELETE FROM stock_tags WHERE symbol = ${symbol} AND tag_id = ${tagRows[0].id}`;
+    await sql`DELETE FROM stock_tags WHERE symbol = ${symbol} AND tag_id = ${tagRows[0].id} AND user_id = ${userId}`;
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
     console.log("❌ DELETE /api/stock-tags ERROR:");
@@ -357,13 +379,8 @@ async function handleUnassignStockTag(req, res) {
   }
 }
 
-// POST /api/cleanup { symbols: [...] } -> remove stock_tags rows for symbols not in the given list
-async function handleCleanup(req, res) {
+async function handleCleanup(req, res, userId) {
   try {
-    if (mockHoldings) {
-      console.log("⚠️  Cleanup not required");
-      return sendJson(res, 200, { status: "ok", removedCount: 0, removedSymbols: [] });
-    }
     const body = await readJsonBody(req);
     const symbols = Array.isArray(body.symbols) ? body.symbols.filter(Boolean) : [];
     if (symbols.length === 0) {
@@ -376,7 +393,7 @@ async function handleCleanup(req, res) {
 
     const deleted = await sql`
       DELETE FROM stock_tags
-      WHERE symbol <> ALL(${protectedSymbols})
+      WHERE user_id = ${userId} AND symbol <> ALL(${protectedSymbols})
       RETURNING symbol
     `;
     console.log("✅ Cleanup Results:", deleted.length, deleted.map(r => r.symbol));
@@ -388,18 +405,16 @@ async function handleCleanup(req, res) {
   }
 }
 
-// Create HTTP server
 const server = http.createServer(async (req, res) => {
 
   const requestStartedAt = Date.now();
 
   res.on("finish", () => {
     const elapsedMs = Date.now() - requestStartedAt;
-    const statusCode = ["/portfolio/holdings", "/user/profile"].includes(req.url) && mockHoldings ? 304 : res.statusCode;
+    const statusCode = ["/portfolio/holdings", "/user/profile"].includes(req.url) && !getSession(req) ? 304 : res.statusCode;
     console.log(`${req.method} ${req.url} → ${statusCode} (${elapsedMs}ms)`);
   });
 
-  // CORS
   res.setHeader(
     "Access-Control-Allow-Origin",
     "*"
@@ -421,42 +436,55 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const session = getSession(req);
+
+  const userId = (session && session.user_id) || "MOCK_DATA";
+
   // ── Tag API routes ──────────────────────────────────
   const parsedForTags = new URL(req.url, "http://placeholder.local");
   const tagPathname = parsedForTags.pathname;
 
   if (tagPathname === "/api/tags" && req.method === "GET") {
-    return handleGetTags(req, res);
+    return handleGetTags(res, userId);
+  }
+
+  const isTagAmendmentRoute =
+    (tagPathname === "/api/tags" && req.method === "POST") ||
+    (tagPathname.startsWith("/api/tags/") && (req.method === "PUT" || req.method === "DELETE")) ||
+    (tagPathname === "/api/stock-tags" && (req.method === "POST" || req.method === "DELETE"));
+
+  if (isTagAmendmentRoute && !session) {
+    return sendJson(res, 403, { status: "error", message: "Buy this dashboard to manage your tags" });
   }
 
   if (tagPathname === "/api/tags" && req.method === "POST") {
-    return handleCreateTag(req, res);
+    return handleCreateTag(req, res, userId);
   }
 
   if (tagPathname.startsWith("/api/tags/") && req.method === "PUT") {
     const oldName = decodeURIComponent(tagPathname.slice("/api/tags/".length));
-    return handleRenameTag(req, res, oldName);
+    return handleRenameTag(req, res, oldName, userId);
   }
 
   if (tagPathname.startsWith("/api/tags/") && req.method === "DELETE") {
     const name = decodeURIComponent(tagPathname.slice("/api/tags/".length));
-    return handleDeleteTag(req, res, name);
+    return handleDeleteTag(res, name, userId);
   }
 
   if (tagPathname === "/api/stock-tags" && req.method === "POST") {
-    return handleAssignStockTag(req, res);
+    return handleAssignStockTag(req, res, userId);
   }
 
   if (tagPathname === "/api/stock-tags" && req.method === "DELETE") {
-    return handleUnassignStockTag(req, res);
+    return handleUnassignStockTag(req, res, userId);
   }
 
   if (tagPathname === "/api/cleanup" && req.method === "POST") {
-    return handleCleanup(req, res);
+    return handleCleanup(req, res, userId);
   }
 
-  if (tagPathname === "/portfolio/holdings" && req.method === "GET" && mockHoldings) {
-    const mockHoldings = await enrichWithLiveQuotes(MOCK_HOLDINGS);
+  if (tagPathname === "/portfolio/holdings" && req.method === "GET" && !session) {
+    const mockHoldings = await enrichWithLiveQuotes(MOCK_HOLDINGS, true);
     return sendJson(res, 200, {
       status: "success",
       isStubbed: true,
@@ -464,16 +492,17 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
-  if (tagPathname === "/user/profile" && req.method === "GET" && mockHoldings) {
+  if (tagPathname === "/user/profile" && req.method === "GET" && !session) {
     return sendJson(res, 200, {
       status: "success",
       data: {
+        user_id: "",
         avatar_url: "https://s3.ap-south-1.amazonaws.com/zerodha-kite-blobs/avatars/zYRMQSdS4xxhhTeGgtzK5pfeAQY8Vfr0.png",
+        full_name: "Barun Patro",
       },
     });
   }
 
-  // Static routes
   if (
     req.url === "/" ||
     path.extname(req.url)
@@ -483,11 +512,63 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Login route
+  if (req.url === "/api/user" && req.method === "POST") {
+
+    const body = await readJsonBody(req);
+    const userId = (body.user_id || "").trim();
+
+    if (!userId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Missing user_id in session" }));
+      return;
+    }
+
+    const creds = await getUserCredentials(userId, req);
+
+    if (!creds) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "User not found" }));
+      return;
+    }
+
+    const cookieValue = JSON.stringify({ user_id: userId });
+    const cookieFlags = [
+      "Path=/",
+      "HttpOnly",
+      "SameSite=Lax",
+    ];
+    if (!isLocalhost(req)) cookieFlags.push("Secure");
+
+    res.setHeader(
+      "Set-Cookie",
+      `kite_session=${encodeURIComponent(cookieValue)}; ${cookieFlags.join("; ")}`
+    );
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
+
   if (req.url === "/login") {
 
+    const userId = session && session.user_id;
+
+    if (!userId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Missing user_id in session" }));
+      return;
+    }
+
+    const creds = await getUserCredentials(userId, req);
+
+    if (!creds) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "User not found" }));
+      return;
+    }
+
     const loginUrl =
-      `https://kite.trade/connect/login?v=3&api_key=${API_KEY}`;
+      `https://kite.trade/connect/login?v=3&api_key=${creds.api_key}`;
 
     res.writeHead(302, {
       Location: loginUrl,
@@ -497,7 +578,29 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Callback route
+  if (req.url === "/logout") {
+
+    const cookieFlags = [
+      "Path=/",
+      "HttpOnly",
+      "SameSite=Lax",
+      "Max-Age=0",
+    ];
+    if (!isLocalhost(req)) cookieFlags.push("Secure");
+
+    res.setHeader(
+      "Set-Cookie",
+      `kite_session=; ${cookieFlags.join("; ")}`
+    );
+
+    res.writeHead(302, {
+      Location: "/",
+    });
+
+    res.end();
+    return;
+  }
+
   if (req.url.startsWith("/callback")) {
 
     const parsedUrl = new URL(req.url, "http://placeholder.local");
@@ -516,7 +619,25 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    const userId = session && session.user_id;
+
+    if (!userId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Missing user_id in session" }));
+      return;
+    }
+
+    const creds = await getUserCredentials(userId, req);
+
+    if (!creds) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "User not found" }));
+      return;
+    }
+
     generateAccessToken(
+      creds.api_key,
+      creds.api_secret,
       requestToken,
       (err, token) => {
 
@@ -525,14 +646,28 @@ const server = http.createServer(async (req, res) => {
           console.log("❌ TOKEN ERROR:");
           console.log(err);
 
-          res.writeHead(500, {
-            "Content-Type": "application/json",
-          });
-
-          res.end(JSON.stringify(err));
+          res.writeHead(302, {
+            Location: "/",
+          }).end();
 
           return;
         }
+
+        const cookieValue = JSON.stringify({
+          user_id: userId,
+          access_token: token,
+        });
+        const cookieFlags = [
+          "Path=/",
+          "HttpOnly",
+          "SameSite=Lax",
+        ];
+        if (!isLocalhost(req)) cookieFlags.push("Secure");
+
+        res.setHeader(
+          "Set-Cookie",
+          `kite_session=${encodeURIComponent(cookieValue)}; ${cookieFlags.join("; ")}`
+        );
 
         res.writeHead(302, {
           Location: "/",
@@ -543,13 +678,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Require login first
-  if (!ACCESS_TOKEN) {
+  if (!session || !session.access_token) {
 
     return promptLoginRequired(res, "Access token is required");
   }
 
-  // Proxy request to Zerodha
+  const proxyCreds = await getUserCredentials(session.user_id, req);
+
+  if (!proxyCreds) {
+    return promptLoginRequired(res, "User not found");
+  }
+
   const options = {
 
     hostname: KITE_HOST,
@@ -564,7 +703,7 @@ const server = http.createServer(async (req, res) => {
       "X-Kite-Version": "3",
 
       "Authorization":
-        `token ${API_KEY}:${ACCESS_TOKEN}`,
+        `token ${proxyCreds.api_key}:${session.access_token}`,
 
       "Content-Type": "application/json",
 
@@ -593,9 +732,10 @@ const server = http.createServer(async (req, res) => {
           return promptLoginRequired(res, response?.message);
         }
 
-        // ── Live-quote enrichment for holdings only ──────────────
-        const parsedHoldingsUrl = new URL(req.url, "http://placeholder.local");
-        const isHoldingsRoute = parsedHoldingsUrl.pathname === "/portfolio/holdings"
+        // ── Live-quote enrichment for holdings, trimmed profile merge ──
+        const parsedRouteUrl = new URL(req.url, "http://placeholder.local");
+        const isHoldingsRoute = parsedRouteUrl.pathname === "/portfolio/holdings";
+        const isProfileRoute = parsedRouteUrl.pathname === "/user/profile";
 
         if (
           isHoldingsRoute &&
@@ -615,6 +755,27 @@ const server = http.createServer(async (req, res) => {
             "Content-Type": "application/json",
           });
           res.end(JSON.stringify(response));
+          return;
+        }
+
+        if (
+          isProfileRoute &&
+          response?.status === "success" &&
+          response.data
+        ) {
+          const userRows = await sql`SELECT full_name FROM users WHERE id = ${session.user_id}`;
+
+          res.writeHead(kiteRes.statusCode, {
+            "Content-Type": "application/json",
+          });
+          res.end(JSON.stringify({
+            status: "success",
+            data: {
+              user_id: response.data.user_id,
+              avatar_url: response.data.avatar_url,
+              full_name: userRows[0]?.full_name || null,
+            },
+          }));
           return;
         }
 

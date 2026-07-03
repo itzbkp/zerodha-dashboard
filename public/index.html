@@ -188,15 +188,16 @@
         border-radius: 50%;
         display: inline-block;
         margin-right: 5px;
+        position: relative;
+        top: -0.35px;
       }
       .dot-live {
         background: #4caf50;
         animation: pulse 2s infinite;
-        position: relative;
-        top: -0.35px;
       }
       .dot-stub {
         background: #fbc02d;
+        animation: pulse 2s infinite;
       }
       .dot-err {
         background: #f44336;
@@ -285,7 +286,6 @@
         opacity: 0.85;
       }
       .profile-menu {
-        display: none;
         position: absolute;
         top: calc(100% + 10px);
         right: 0;
@@ -296,9 +296,18 @@
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
         z-index: 150;
         overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-6px) scale(0.97);
+        transform-origin: top right;
+        pointer-events: none;
+        transition: all 0.3s ease;
       }
       .profile-menu.open {
-        display: block;
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
       }
       .profile-menu-item {
         display: flex;
@@ -350,6 +359,7 @@
       }
       .profile-menu-section-label {
         font-size: 11px;
+        text-align: center;
         padding: 8px;
         padding: 8px;
       }
@@ -381,9 +391,14 @@
       .profile-tags-actions .chip:last-child {
         border-right: none;
       }
-      .profile-menu-help .info-icon {
+      .info-icon {
         font-size: 15px;
         line-height: 1;
+      }
+      .arrow-icon {
+        font-size: 15px;
+        line-height: 1;
+        margin-left: 2px;
       }
       .modal-header-centered {
         position: relative;
@@ -424,6 +439,35 @@
         font-size: 12px;
         color: #8a8a8a;
         margin-bottom: 10px;
+      }
+      .stub-ribbon {
+        background: #f08a00;
+        color: #111111;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 6px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-align: center;
+        position: relative;
+        width: 100%;
+        cursor: pointer;
+      }
+      .stub-ribbon-close {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-55%);
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        color: #111111;
+        opacity: 0.7;
+      }
+      .stub-ribbon-close:hover {
+        opacity: 1;
       }
       .stat .lbl-row {
         display: flex;
@@ -528,7 +572,6 @@
         gap: 8px;
         flex: 1;
         margin-bottom: 12px;
-        min-height: 64px;
       }
       .tag-row {
         display: flex;
@@ -537,9 +580,6 @@
       }
       .tag-row-measure {
         display: inline-flex;
-      }
-      .filter-row-actions {
-        position: absolute;
       }
       .table-wrap {
         background: #111111;
@@ -730,7 +770,7 @@
       .add-tag-row {
         display: flex;
         gap: 8px;
-        margin-top: 4px;
+        margin-top: 12px;
       }
       .add-tag-row input {
         flex: 1;
@@ -764,6 +804,30 @@
       .btn-add:hover {
         background: #244ea0;
       }
+      .btn-flex-1 {
+        flex: 1;
+      }
+      .btn-danger {
+        background: #c4302d;
+        flex: 1;
+      }
+      .table-wrap col:nth-child(1) {
+        width: 12.5%;
+      }
+      .table-wrap col:nth-child(2) {
+        width: 7.4375%;
+      }
+      .table-wrap col:nth-child(n + 3) {
+        width: 11.4375%;
+      }
+      .login-hint-text {
+        color: #6a6a6a;
+        font-size: 13px;
+      }
+      .login-hint-link {
+        color: #5b8def;
+        text-decoration: none;
+      }
 
       /* ── Toast ── */
       .toast-container {
@@ -788,6 +852,11 @@
         animation: toast 2s ease-in-out forwards;
         max-width: 600px;
       }
+      .toast.toast-success {
+        border-color: #4caf50;
+        color: #4caf50;
+        animation-duration: 4s;
+      }
       .toast::before,
       .toast::after {
         content: "";
@@ -800,6 +869,9 @@
       .toast::before {
         border-width: 8px;
         border-color: transparent transparent #f44336 transparent;
+      }
+      .toast.toast-success::before {
+        border-color: transparent transparent #4caf50 transparent;
       }
       .toast::after {
         border-width: 8px;
@@ -845,6 +917,16 @@
       @media (max-width: 700px) {
         .summary {
           grid-template-columns: 1fr 1fr;
+        }
+        .stat {
+          border-right: 1px solid #4a4a4a;
+          border-bottom: 1px solid #4a4a4a;
+        }
+        .stat:nth-child(2n) {
+          border-right: none;
+        }
+        .stat:nth-last-child(-n + 2) {
+          border-bottom: none;
         }
         .table-container {
           margin: 12px;
@@ -935,12 +1017,12 @@
                     <span class="profile-user-name" id="profile-user-name"
                       >Barun Patro</span
                     >
-                    <span class="profile-user-sub" id="profile-user-sub"
-                      >YD4828</span
-                    >
+                    <span class="profile-user-sub" id="profile-user-sub"></span>
                   </span>
                 </a>
-                <div class="profile-menu-section-label">Tags</div>
+                <div class="profile-menu-section-label">
+                  Groups | Sectors | Tags
+                </div>
                 <div class="profile-menu-item profile-tags-actions">
                   <span
                     class="chip"
@@ -956,11 +1038,29 @@
                   >
                 </div>
                 <div
+                  class="profile-menu-item"
+                  id="menu-login-item"
+                  style="display: none"
+                  onclick="openLoginModal()"
+                >
+                  <span class="arrow-icon">▶</span>
+                  <span>Login</span>
+                </div>
+                <div
                   class="profile-menu-item profile-menu-help"
                   onclick="openInfoModal()"
                 >
                   <span class="info-icon">ⓘ</span>
                   <span>Help</span>
+                </div>
+                <div
+                  class="profile-menu-item"
+                  id="menu-logout-item"
+                  style="display: none"
+                  onclick="handleLogout()"
+                >
+                  <span class="arrow-icon">◀</span>
+                  <span>Logout</span>
                 </div>
               </div>
             </div>
@@ -972,6 +1072,19 @@
             >·</span
           >&nbsp;<span id="ts-text">00:00:00 AM</span>
         </div>
+      </div>
+
+      <div
+        class="stub-ribbon"
+        id="stub-ribbon"
+        style="display: none"
+        onclick="openSignupModal()"
+      >
+        <span
+          >You're watching a demo portfolio. Buy this dashboard to see your own
+          portfolio, performance and insights.</span
+        >
+        <span class="stub-ribbon-close" onclick="dismissStubRibbon()">×</span>
       </div>
 
       <div class="summary">
@@ -1047,15 +1160,15 @@
           <div class="table-scroll">
             <table>
               <colgroup>
-                <col style="width: 12.5%" />
-                <col style="width: 7.4375%" />
-                <col style="width: 11.4375%" />
-                <col style="width: 11.4375%" />
-                <col style="width: 11.4375%" />
-                <col style="width: 11.4375%" />
-                <col style="width: 11.4375%" />
-                <col style="width: 11.4375%" />
-                <col style="width: 11.4375%" />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
               </colgroup>
               <thead id="th">
                 <tr>
@@ -1120,7 +1233,85 @@
             placeholder="Tag name"
             onkeydown="if (event.key === 'Enter') createTag();"
           />
-          <button class="btn-add" onclick="createTag()">Add</button>
+        </div>
+        <div class="add-tag-row">
+          <button class="btn-add btn-flex-1" onclick="createTag()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login modal -->
+    <div class="modal-overlay" id="login-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Login</h3>
+          <span class="modal-close" onclick="closeLoginModal()">×</span>
+        </div>
+        <div class="add-tag-row">
+          <input
+            type="text"
+            id="login-userid-input"
+            placeholder="Zerodha User ID"
+            onkeydown="if (event.key === 'Enter') submitLogin();"
+          />
+        </div>
+        <div class="add-tag-row" id="login-error-row" style="display: none">
+          <span id="login-error-text" class="login-hint-text"
+            >Come join us!
+            <a
+              href="javascript:void(0)"
+              class="login-hint-link"
+              onclick="openSignupModal(true)"
+              >Click here</a
+            >
+            to get started.</span
+          >
+        </div>
+        <div class="add-tag-row">
+          <button class="btn-add btn-flex-1" onclick="submitLogin()">
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signup modal -->
+    <div class="modal-overlay" id="signup-modal">
+      <div class="modal">
+        <div class="modal-header modal-header-centered">
+          <h3>Sign Up</h3>
+          <span class="modal-close" onclick="closeSignupModal()">×</span>
+        </div>
+        <ul class="info-points">
+          <li>Track your own Zerodha holdings, not a demo.</li>
+          <li>Real-time P&amp;L, live quotes, and custom tags.</li>
+          <li>We'll reach out once your account is ready.</li>
+        </ul>
+        <div class="add-tag-row">
+          <input
+            type="email"
+            id="signup-email-input"
+            placeholder="Email Address"
+          />
+        </div>
+        <div class="add-tag-row">
+          <input
+            type="text"
+            id="signup-name-input"
+            placeholder="Display Name"
+          />
+        </div>
+        <div class="add-tag-row">
+          <input
+            type="text"
+            id="signup-userid-input"
+            placeholder="Zerodha User ID"
+          />
+        </div>
+        <div class="add-tag-row">
+          <button class="btn-add btn-flex-1" onclick="submitSignup()">
+            Join Us
+          </button>
         </div>
       </div>
     </div>
@@ -1139,7 +1330,11 @@
             placeholder="New tag name…"
             onkeydown="if (event.key === 'Enter') confirmRenameTag();"
           />
-          <button class="btn-add" onclick="confirmRenameTag()">Rename</button>
+        </div>
+        <div class="add-tag-row">
+          <button class="btn-add btn-flex-1" onclick="confirmRenameTag()">
+            Rename
+          </button>
         </div>
       </div>
     </div>
@@ -1154,9 +1349,8 @@
         <p id="delete-confirm-text" class="delete-confirm-text"></p>
         <div class="add-tag-row">
           <button
-            class="btn-add"
+            class="btn-add btn-danger"
             id="delete-confirm-btn"
-            style="background: #c4302d; flex: 1"
             onclick="confirmDeleteTag()"
           >
             Delete
@@ -1188,6 +1382,7 @@
       let sCol = "day_change_percentage",
         sDir = -1;
       let retSortMode = 0; // 0 = no sort, 1 = red (losers) first, 2 = green (gainers) first
+      let isDemoMode = false;
       let cleanupDone = false;
       let activeTagFilters = new Set();
       let autoTagFilters = new Set();
@@ -1197,8 +1392,30 @@
       let globalTags = [];
       let stockTags = {};
       let weightMode = "day"; // "invested" | "current" | "day" | "dayBr" | "total" | "totalBr"
-      let dayPref = "day"; // remembers last-used Day's P&L sub-mode: "day" | "dayBr"
-      let totalPref = "total"; // remembers last-used Total P&L sub-mode: "total" | "totalBr"
+      let dayPref = "day"; // "day" | "dayBr"
+      let totalPref = "total"; // "total" | "totalBr"
+      let stubRibbonDismissed = false;
+
+      function dismissStubRibbon() {
+        event.stopPropagation();
+        stubRibbonDismissed = true;
+        const ribbon = document.getElementById("stub-ribbon");
+        if (ribbon) ribbon.style.display = "none";
+      }
+
+      function updateStubRibbon(isStubbed) {
+        const ribbon = document.getElementById("stub-ribbon");
+        const loginItem = document.getElementById("menu-login-item");
+        const logoutItem = document.getElementById("menu-logout-item");
+        if (loginItem) loginItem.style.display = isStubbed ? "" : "none";
+        if (logoutItem) logoutItem.style.display = isStubbed ? "none" : "";
+        if (!ribbon) return;
+        if (isStubbed && !stubRibbonDismissed) {
+          ribbon.style.display = "flex";
+        } else if (!isStubbed) {
+          ribbon.style.display = "none";
+        }
+      }
 
       function applyWeightMode() {
         ["invested", "current", "day", "total"].forEach((m) => {
@@ -1255,8 +1472,6 @@
       }
 
       // ── localStorage cache ────────────────────────────
-      // "tags"       → string[]              (mirrors `tags` table)
-      // "stock_tags" → { symbol: string[] }  (mirrors `stock_tags` table)
       function loadTagsFromCache() {
         try {
           const rawTags = localStorage.getItem("tags");
@@ -1276,11 +1491,6 @@
       }
 
       // ── Toast ─────────────────────────────────────────
-      // Claude.ai renders artifacts inside a sandboxed iframe, so
-      // window.self !== window.top there. Your real deployment (served
-      // directly by server.js) is loaded in a top-level tab, where this is
-      // false. Cross-origin access to window.top can throw inside some
-      // sandboxes too, which we also treat as "running inside an artifact".
       const IS_ARTIFACT_ENV = (() => {
         try {
           return window.self !== window.top;
@@ -1289,13 +1499,13 @@
         }
       })();
 
-      function showToast(message) {
+      function showToast(message, variant) {
         if (IS_ARTIFACT_ENV) return;
         const el = document.createElement("div");
-        el.className = "toast";
+        el.className = `toast ${variant === "success" ? "toast-success" : ""}`;
         el.textContent = message;
         document.getElementById("toast-container").appendChild(el);
-        setTimeout(() => el.remove(), 5000);
+        setTimeout(() => el.remove(), variant === "success" ? 4000 : 2000);
       }
 
       // ── Formatting ────────────────────────────────────
@@ -1308,7 +1518,6 @@
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         });
-      const fi = (n) => Math.round(Math.abs(n)).toLocaleString("en-IN");
 
       // ── Status / clock ────────────────────────────────
       function setStatus(statusCode) {
@@ -1364,6 +1573,8 @@
                 : 0
           }));
           setStatus(isApiFailure ? 0 : json.isStubbed ? 2 : 1);
+          isDemoMode = json.isStubbed;
+          updateStubRibbon(json.isStubbed);
           if (isApiFailure)
             showToast(json.message || "Failed to fetch holdings");
           renderSummary();
@@ -1404,26 +1615,28 @@
           if (json.status === "error" || !json.data) return;
           const p = json.data;
 
-          if (p.avatar_url) {
-            const initials = (p.user_shortname || p.user_name || "")
-              .split(" ")
-              .map((w) => w[0])
-              .filter(Boolean)
-              .slice(0, 2)
-              .join("")
-              .toUpperCase();
+          const initials = (p.full_name || "")
+            .split(" ")
+            .map((w) => w[0])
+            .filter(Boolean)
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
 
-            const btn = document.getElementById("avatar-btn");
-            if (btn)
-              btn.innerHTML = `<img src="${p.avatar_url}" alt="${initials}" />`;
+          const avatarBtn = document.getElementById("avatar-btn");
+          const avatarLg = document.getElementById("profile-avatar-lg");
+          const nameEl = document.getElementById("profile-user-name");
+          const subEl = document.getElementById("profile-user-sub");
 
-            const lg = document.getElementById("profile-avatar-lg");
-            if (lg)
-              lg.innerHTML = `<img src="${p.avatar_url}" alt="${initials}" />`;
-          }
-        } catch (e) {
-          // Silently keep the initials placeholder on failure.
-        }
+          const avatarHtml = p.avatar_url
+            ? `<img src="${p.avatar_url}" alt="${initials}" />`
+            : `<span>${initials}</span>`;
+
+          if (avatarBtn) avatarBtn.innerHTML = avatarHtml;
+          if (avatarLg) avatarLg.innerHTML = avatarHtml;
+          if (nameEl) nameEl.textContent = p.full_name || "";
+          if (subEl) subEl.textContent = p.user_id || "";
+        } catch (e) {}
       }
 
       // ── API: Cleanup ──────────────────────────────────
@@ -1532,8 +1745,6 @@
       }
 
       // ── Render: Tag filter row ────────────────────────
-      // Snaps a 0-100 percentage to the nearest upper band for gradient
-      // split points only (display values/tooltips remain exact).
       function snapToBand(pct) {
         const bands = [20, 40, 60, 80, 100];
         for (const b of bands) {
@@ -1575,7 +1786,6 @@
           };
         }
 
-        // day / dayBr / total / totalBr
         const isBreadth = weightMode === "dayBr" || weightMode === "totalBr";
         const isDayFamily = weightMode === "day" || weightMode === "dayBr";
         const gainers = isDayFamily
@@ -1703,10 +1913,6 @@
         if (editChip) editChip.classList.toggle("active", editModeOn);
       }
 
-      // Measures natural flex-wrap line breaks for the pills, then rebuilds
-      // them into explicit per-row containers: every full row gets
-      // justify-content:space-between, while the last (possibly partial)
-      // row gets justify-content:flex-start.
       function layoutTagRows(pillsHtml) {
         const container = document.getElementById("tag-filters");
         if (!pillsHtml.length) {
@@ -1714,7 +1920,6 @@
           return;
         }
 
-        // Render flat (wrapping) first so we can measure natural rows.
         container.style.flexDirection = "row";
         container.style.flexWrap = "wrap";
         container.innerHTML = pillsHtml
@@ -1737,7 +1942,6 @@
         });
         if (currentRow.length) rows.push(currentRow);
 
-        // Rebuild into explicit row containers.
         container.style.flexDirection = "column";
         container.style.flexWrap = "nowrap";
         container.innerHTML = rows
@@ -1789,7 +1993,12 @@
           num: true,
           fmt: (v) => `<span style="color:#5b8def">${v}</span>`
         },
-        { k: "_inv", l: "Invested", num: true, fmt: (v) => fi(v) },
+        {
+          k: "_inv",
+          l: "Invested",
+          num: true,
+          fmt: (v) => `<span>${v.toFixed(2)}</span>`
+        },
         { k: "average_price", l: "Avg. cost", num: true, fmt: (v) => fc(v) },
         {
           k: "last_price",
@@ -1824,7 +2033,7 @@
           l: "P&amp;L",
           num: true,
           fmt: (v) =>
-            `<span class="${v >= 0 ? "pp" : "pn"}">${v >= 0 ? "+" : "-"}${fi(v)}</span>`
+            `<span class="${v >= 0 ? "pp" : "pn"}">${v.toFixed(2)}</span>`
         },
         {
           k: "_ret",
@@ -1875,8 +2084,6 @@
         return row[key];
       }
 
-      // Matches a tag name against a query, checking the whole name as well
-      // as each "-"-separated segment (e.g. "x-down" matches query "d")
       function tagMatchesQuery(tagName, query) {
         return tagName
           .toLowerCase()
@@ -1894,7 +2101,6 @@
           .map((s) => s.replace(/\s+/g, ""))
           .filter(Boolean);
 
-        // Auto-activate tag filters matching search query
         const matchedTags = queries.length
           ? new Set(
               globalTags.filter((t) =>
@@ -1923,14 +2129,11 @@
 
         let data;
         if (activeTagFilters.size) {
-          // Any tag active (manual or search-matched) → union of stocks
-          // carrying any of those tags. Symbol text is ignored entirely.
           data = H.filter((h) => {
             const t = stockTags[h.tradingsymbol] || [];
             return [...activeTagFilters].some((f) => t.includes(f));
           });
         } else if (queries.length) {
-          // No tags active → filter purely by symbol match
           data = H.filter((h) => {
             const symLower = h.tradingsymbol.toLowerCase().replace(/\s+/g, "");
             return queries.some(
@@ -2034,6 +2237,102 @@
           closeInfoModal();
       });
 
+      // ── Modal: Login ───────────────────────────────────
+      function openLoginModal() {
+        closeProfileMenu();
+        document.getElementById("login-error-row").style.display = "none";
+        document.getElementById("login-userid-input").value = "";
+        document.getElementById("login-modal").classList.add("open");
+        setTimeout(() => {
+          document.getElementById("login-userid-input").focus();
+        }, 50);
+      }
+
+      function closeLoginModal() {
+        document.getElementById("login-modal").classList.remove("open");
+        focusSearch();
+      }
+
+      document.getElementById("login-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("login-modal"))
+          closeLoginModal();
+      });
+
+      function handleLogout() {
+        closeProfileMenu();
+        window.location.href = "/logout";
+      }
+
+      async function submitLogin() {
+        const userId = document
+          .getElementById("login-userid-input")
+          .value.trim();
+        if (!userId) return;
+
+        try {
+          const res = await fetch("/api/user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId })
+          });
+          const data = await res.json();
+
+          if (data.status === "error") {
+            showToast("Sorry! You aren't registered with us.");
+            document.getElementById("login-error-row").style.display = "flex";
+            return;
+          }
+
+          closeLoginModal();
+          window.location.href = "/login";
+        } catch (e) {
+          showToast("Sorry! You aren't registered with us.");
+          document.getElementById("login-error-row").style.display = "flex";
+        }
+      }
+
+      // ── Modal: Signup ──────────────────────────────────
+      function openSignupModal(prefillUserId) {
+        const loginUserId = document
+          .getElementById("login-userid-input")
+          .value.trim();
+        closeLoginModal();
+        closeProfileMenu();
+        document.getElementById("signup-email-input").value = "";
+        document.getElementById("signup-name-input").value = "";
+        document.getElementById("signup-userid-input").value = prefillUserId
+          ? loginUserId
+          : "";
+        document.getElementById("signup-modal").classList.add("open");
+        setTimeout(() => {
+          document.getElementById("signup-email-input").focus();
+        }, 50);
+      }
+
+      function closeSignupModal() {
+        document.getElementById("signup-modal").classList.remove("open");
+        focusSearch();
+      }
+
+      document.getElementById("signup-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("signup-modal"))
+          closeSignupModal();
+      });
+
+      async function submitSignup() {
+        const email = document
+          .getElementById("signup-email-input")
+          .value.trim();
+        const name = document.getElementById("signup-name-input").value.trim();
+        const userId = document
+          .getElementById("signup-userid-input")
+          .value.trim();
+        if (!email || !name || !userId) return;
+
+        closeSignupModal();
+        showToast("Thanks! We'll be in touch soon.", "success");
+      }
+
       // ── Modal: Assign tags ────────────────────────────
       function openAssignModal(symbol) {
         editingSymbol = symbol;
@@ -2072,11 +2371,14 @@
       }
 
       async function toggleStockTag(tag) {
+        if (isDemoMode) {
+          showToast("Buy this dashboard to manage your tags");
+          return;
+        }
         const assigned = stockTags[editingSymbol] || [];
         const isAssigned = assigned.includes(tag);
         const prev = [...assigned];
 
-        // Optimistic update
         stockTags[editingSymbol] = isAssigned
           ? assigned.filter((t) => t !== tag)
           : [...assigned, tag];
@@ -2122,6 +2424,10 @@
       }
 
       async function createTag() {
+        if (isDemoMode) {
+          showToast("Buy this dashboard to manage your tags");
+          return;
+        }
         const inp = document.getElementById("new-tag-input");
         const val = inp.value.trim();
         if (!val || globalTags.includes(val)) {
@@ -2129,7 +2435,6 @@
           return;
         }
 
-        // Optimistic update
         globalTags.push(val);
         persistTagsCache();
         inp.value = "";
@@ -2174,11 +2479,14 @@
         document.getElementById("renametag-modal").classList.add("open");
         setTimeout(() => {
           inp.focus();
-          inp.select();
         }, 50);
       }
 
       async function confirmRenameTag() {
+        if (isDemoMode) {
+          showToast("Buy this dashboard to manage your tags");
+          return;
+        }
         const inp = document.getElementById("rename-tag-input");
         const newName = inp.value.trim();
         if (!newName || newName === renamingTag) {
@@ -2195,7 +2503,6 @@
         const prevStock = JSON.parse(JSON.stringify(stockTags));
         const prevFilters = new Set(activeTagFilters);
 
-        // Optimistic update
         globalTags = globalTags.map((t) => (t === oldName ? newName : t));
         Object.keys(stockTags).forEach((sym) => {
           stockTags[sym] = stockTags[sym].map((t) =>
@@ -2273,6 +2580,10 @@
         });
 
       async function confirmDeleteTag() {
+        if (isDemoMode) {
+          showToast("Buy this dashboard to manage your tags");
+          return;
+        }
         const tag = pendingDeleteTag;
         closeDeleteConfirmModal();
         if (!tag) return;
@@ -2281,7 +2592,6 @@
         const prevStock = JSON.parse(JSON.stringify(stockTags));
         const wasActive = activeTagFilters.has(tag);
 
-        // Optimistic update
         globalTags = globalTags.filter((t) => t !== tag);
         Object.keys(stockTags).forEach((sym) => {
           stockTags[sym] = stockTags[sym].filter((t) => t !== tag);
@@ -2352,8 +2662,8 @@
       });
 
       // ── Init ──────────────────────────────────────────
-      setStatus(1); // show clock immediately before first fetch
-      setWeightMode("day"); // default weight mode
+      setStatus(1);
+      setWeightMode("day");
       focusSearch();
       setInterval(fetchHoldings, 1000);
       if (loadTagsFromCache()) renderTagFilterRow();
