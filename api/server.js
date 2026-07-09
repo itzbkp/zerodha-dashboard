@@ -13,6 +13,8 @@ const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 const KITE_HOST = "api.kite.trade";
 
+const MOCK_DATA = "MOCK_DATA";
+
 const sql = neon(process.env.DATABASE_URL);
 
 // ── Market hours check (NSE/BSE) ────────────────────
@@ -26,7 +28,7 @@ function isIndianMarketOpen() {
   const minutesNow = nowIST.getHours() * 60 + nowIST.getMinutes();
   const marketOpen = 9 * 60 + 15;
   const marketClose = 15 * 60 + 30;
-  return minutesNow >= marketOpen && minutesNow <= marketClose;
+  return minutesNow >= marketOpen && minutesNow < marketClose;
 }
 
 // ── Yahoo Finance live-quote enrichment ─────────────
@@ -50,6 +52,7 @@ async function enrichWithLiveQuotes(holdings, isStubbed) {
     quoteMap = await yahooFinance.quote(yahooSymbols, { return: "object" });
   } catch (err) {
     console.log("⚠️  Unable to fetch live quotes from Yahoo Finance:", err.message);
+    holdings.status = "error";
     return holdings;
   }
 
@@ -80,9 +83,14 @@ async function enrichWithLiveQuotes(holdings, isStubbed) {
 function serveFiles(req, res) {
 
   const publicDir = path.join(__dirname, "..", "public");
+  const assetsDir = path.join(publicDir, "assets");
+
+  const requestedPath = req.url === "/" ? "index.html" : req.url;
 
   const filePath = path.normalize(
-    path.join(publicDir, req.url === "/" ? "index.html" : req.url)
+    requestedPath === "index.html"
+      ? path.join(publicDir, "index.html")
+      : path.join(assetsDir, requestedPath)
   );
 
   if (!filePath.startsWith(publicDir)) {
@@ -104,6 +112,8 @@ function serveFiles(req, res) {
     const contentTypes = {
       ".html": "text/html",
       ".ico": "image/x-icon",
+      ".svg": "image/svg+xml",
+      ".png": "image/png",
     };
 
     res.writeHead(200, {
@@ -149,11 +159,17 @@ function isLocalhost(req) {
 
 async function getUserCredentials(userId, req) {
   if (!userId) return null;
-  const rows = await sql`SELECT api_key, api_secret FROM users WHERE id = ${userId}`;
-  return rows[0] ? isLocalhost(req) ? {
-    api_key: process.env.API_KEY,
-    api_secret: process.env.API_SECRET,
-  } : rows[0] : null;
+  try {
+    const rows = await sql`SELECT api_key, api_secret FROM users WHERE id = ${userId}`;
+    return rows[0] ? isLocalhost(req) ? {
+      api_key: process.env.API_KEY,
+      api_secret: process.env.API_SECRET,
+    } : rows[0] : null;
+  } catch (err) {
+    console.log("❌ getUserCredentials DB ERROR:");
+    console.log(err.message);
+    return null;
+  }
 }
 
 function generateAccessToken(apiKey, apiSecret, requestToken, callback) {
@@ -228,14 +244,7 @@ function generateAccessToken(apiKey, apiSecret, requestToken, callback) {
 
 function promptLoginRequired(res, message) {
   console.log("❌ " + message);
-
-  res.writeHead(401, {
-    "Content-Type": "application/json",
-  });
-
-  res.end(JSON.stringify({
-    status: "Login-Required"
-  }));
+  sendJson(res, 401, { status: "Login-Required" });
 }
 
 // ── Tag DB helpers ──────────────────────────────────
@@ -281,13 +290,15 @@ async function handleGetTags(res, userId) {
     sendJson(res, 200, { tags, stockTags });
   } catch (err) {
     console.log("❌ GET /api/tags ERROR:");
-    console.log(err);
+    console.log(err.message);
     sendJson(res, 500, { status: "error", message: err.message });
   }
 }
 
 async function handleCreateTag(req, res, userId) {
   try {
+    if (userId === MOCK_DATA) return sendJson(res, 401, { status: "error", message: "Buy this dashboard to manage your tags" });
+
     const body = await readJsonBody(req);
     const name = (body.name || "").trim();
     if (!name) return sendJson(res, 400, { status: "error", message: "Tag name required" });
@@ -303,13 +314,15 @@ async function handleCreateTag(req, res, userId) {
     sendJson(res, 200, { tag: rows[0] });
   } catch (err) {
     console.log("❌ POST /api/tags ERROR:");
-    console.log(err);
+    console.log(err.message);
     sendJson(res, 500, { status: "error", message: err.message });
   }
 }
 
 async function handleRenameTag(req, res, oldName, userId) {
   try {
+    if (userId === MOCK_DATA) return sendJson(res, 401, { status: "error", message: "Buy this dashboard to manage your tags" });
+
     const body = await readJsonBody(req);
     const newName = (body.newName || "").trim();
     if (!newName) return sendJson(res, 400, { status: "error", message: "newName required" });
@@ -322,24 +335,28 @@ async function handleRenameTag(req, res, oldName, userId) {
     sendJson(res, 200, { tag: rows[0] });
   } catch (err) {
     console.log("❌ PUT /api/tags ERROR:");
-    console.log(err);
+    console.log(err.message);
     sendJson(res, 500, { status: "error", message: err.message });
   }
 }
 
 async function handleDeleteTag(res, name, userId) {
   try {
+    if (userId === MOCK_DATA) return sendJson(res, 401, { status: "error", message: "Buy this dashboard to manage your tags" });
+
     await sql`DELETE FROM tags WHERE name = ${name} AND user_id = ${userId}`;
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
     console.log("❌ DELETE /api/tags ERROR:");
-    console.log(err);
+    console.log(err.message);
     sendJson(res, 500, { status: "error", message: err.message });
   }
 }
 
 async function handleAssignStockTag(req, res, userId) {
   try {
+    if (userId === MOCK_DATA) return sendJson(res, 401, { status: "error", message: "Buy this dashboard to manage your tags" });
+
     const body = await readJsonBody(req);
     const symbol = (body.symbol || "").trim();
     const tag = (body.tag || "").trim();
@@ -355,13 +372,15 @@ async function handleAssignStockTag(req, res, userId) {
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
     console.log("❌ POST /api/stock-tags ERROR:");
-    console.log(err);
+    console.log(err.message);
     sendJson(res, 500, { status: "error", message: err.message });
   }
 }
 
 async function handleUnassignStockTag(req, res, userId) {
   try {
+    if (userId === MOCK_DATA) return sendJson(res, 401, { status: "error", message: "Buy this dashboard to manage your tags" });
+
     const body = await readJsonBody(req);
     const symbol = (body.symbol || "").trim();
     const tag = (body.tag || "").trim();
@@ -374,13 +393,15 @@ async function handleUnassignStockTag(req, res, userId) {
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
     console.log("❌ DELETE /api/stock-tags ERROR:");
-    console.log(err);
+    console.log(err.message);
     sendJson(res, 500, { status: "error", message: err.message });
   }
 }
 
 async function handleCleanup(req, res, userId) {
   try {
+    if (userId === MOCK_DATA) return sendJson(res, 200, { status: "ok", removedCount: 0, removedSymbols: [] });
+
     const body = await readJsonBody(req);
     const symbols = Array.isArray(body.symbols) ? body.symbols.filter(Boolean) : [];
     if (symbols.length === 0) {
@@ -400,7 +421,7 @@ async function handleCleanup(req, res, userId) {
     sendJson(res, 200, { status: "ok", removedCount: deleted.length, removedSymbols: deleted.map(r => r.symbol) });
   } catch (err) {
     console.log("❌ POST /api/cleanup ERROR:");
-    console.log(err);
+    console.log(err.message);
     sendJson(res, 500, { status: "error", message: err.message });
   }
 }
@@ -408,10 +429,11 @@ async function handleCleanup(req, res, userId) {
 const server = http.createServer(async (req, res) => {
 
   const requestStartedAt = Date.now();
+  const session = getSession(req);
 
   res.on("finish", () => {
     const elapsedMs = Date.now() - requestStartedAt;
-    const statusCode = ["/portfolio/holdings", "/user/profile"].includes(req.url) && !getSession(req) ? 304 : res.statusCode;
+    const statusCode = ["/portfolio/holdings", "/user/profile"].includes(req.url) && !session ? 304 : res.statusCode;
     console.log(`${req.method} ${req.url} → ${statusCode} (${elapsedMs}ms)`);
   });
 
@@ -436,9 +458,9 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const session = getSession(req);
+  const userId = (session && session.user_id) || MOCK_DATA;
 
-  const userId = (session && session.user_id) || "MOCK_DATA";
+  const parsedRouteUrl = new URL(req.url, "http://placeholder.local");
 
   // ── Tag API routes ──────────────────────────────────
   const parsedForTags = new URL(req.url, "http://placeholder.local");
@@ -486,8 +508,9 @@ const server = http.createServer(async (req, res) => {
   if (tagPathname === "/portfolio/holdings" && req.method === "GET" && !session) {
     const mockHoldings = await enrichWithLiveQuotes(MOCK_HOLDINGS, true);
     return sendJson(res, 200, {
-      status: "success",
+      status: mockHoldings.status || "success",
       isStubbed: true,
+      marketOpen: isIndianMarketOpen(),
       data: mockHoldings,
     });
   }
@@ -499,6 +522,7 @@ const server = http.createServer(async (req, res) => {
         user_id: "",
         avatar_url: "https://s3.ap-south-1.amazonaws.com/zerodha-kite-blobs/avatars/zYRMQSdS4xxhhTeGgtzK5pfeAQY8Vfr0.png",
         full_name: "Barun Patro",
+        cash: 0,
       },
     });
   }
@@ -513,57 +537,62 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.url === "/api/user" && req.method === "POST") {
+    try {
+      const body = await readJsonBody(req);
+      const userId = (body.user_id || "").trim();
 
-    const body = await readJsonBody(req);
-    const userId = (body.user_id || "").trim();
+      if (!userId) {
+        console.log("❌ POST /api/user ERROR:");
+        console.log("Missing user_id in session");
 
-    if (!userId) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Missing user_id in session" }));
+        sendJson(res, 400, { status: "error", message: "Missing user_id in session" });
+        return;
+      }
+
+      const creds = await getUserCredentials(userId, req);
+
+      if (!creds) {
+        console.log("❌ POST /api/user ERROR:");
+        console.log("User not found");
+
+        sendJson(res, 404, { status: "error", message: "User not found" });
+        return;
+      }
+
+      const cookieValue = JSON.stringify({ user_id: userId });
+      const cookieFlags = [
+        "Path=/",
+        "HttpOnly",
+        "SameSite=Lax",
+        "Max-Age=315360000",
+      ];
+      if (!isLocalhost(req)) cookieFlags.push("Secure");
+
+      res.setHeader(
+        "Set-Cookie",
+        `kite_session=${encodeURIComponent(cookieValue)}; ${cookieFlags.join("; ")}`
+      );
+
+      sendJson(res, 200, { status: "ok" });
+      return;
+    } catch (err) {
+      console.log("❌ POST /api/user ERROR:");
+      console.log(err.message);
+
+      sendJson(res, 500, { status: "error", message: err.message });
       return;
     }
-
-    const creds = await getUserCredentials(userId, req);
-
-    if (!creds) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "User not found" }));
-      return;
-    }
-
-    const cookieValue = JSON.stringify({ user_id: userId });
-    const cookieFlags = [
-      "Path=/",
-      "HttpOnly",
-      "SameSite=Lax",
-    ];
-    if (!isLocalhost(req)) cookieFlags.push("Secure");
-
-    res.setHeader(
-      "Set-Cookie",
-      `kite_session=${encodeURIComponent(cookieValue)}; ${cookieFlags.join("; ")}`
-    );
-
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok" }));
-    return;
   }
 
   if (req.url === "/login") {
 
-    const userId = session && session.user_id;
-
-    if (!userId) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Missing user_id in session" }));
-      return;
-    }
-
     const creds = await getUserCredentials(userId, req);
 
     if (!creds) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "User not found" }));
+      console.log("❌ GET /login ERROR:");
+      console.log("User not found");
+
+      sendJson(res, 404, { status: "error", message: "User not found" });
       return;
     }
 
@@ -610,28 +639,17 @@ const server = http.createServer(async (req, res) => {
 
     if (!requestToken) {
 
-      res.writeHead(400, {
-        "Content-Type": "text/plain",
-      });
-
-      res.end("Missing request_token");
-
-      return;
-    }
-
-    const userId = session && session.user_id;
-
-    if (!userId) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Missing user_id in session" }));
+      sendJson(res, 400, { status: "error", message: "Missing request_token" });
       return;
     }
 
     const creds = await getUserCredentials(userId, req);
 
     if (!creds) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "User not found" }));
+      console.log("❌ POST /callback ERROR:");
+      console.log("User not found");
+
+      sendJson(res, 404, { status: "error", message: "User not found" });
       return;
     }
 
@@ -644,23 +662,22 @@ const server = http.createServer(async (req, res) => {
         if (err) {
 
           console.log("❌ TOKEN ERROR:");
-          console.log(err);
+          console.log(err.message);
 
-          res.writeHead(302, {
-            Location: "/",
-          }).end();
-
+          sendJson(res, 400, { status: "error", message: err.message });
           return;
         }
 
         const cookieValue = JSON.stringify({
           user_id: userId,
+          api_key: creds.api_key,
           access_token: token,
         });
         const cookieFlags = [
           "Path=/",
           "HttpOnly",
           "SameSite=Lax",
+          "Max-Age=315360000",
         ];
         if (!isLocalhost(req)) cookieFlags.push("Secure");
 
@@ -671,22 +688,19 @@ const server = http.createServer(async (req, res) => {
 
         res.writeHead(302, {
           Location: "/",
-        }).end();
+        })
+        res.end();
       }
     );
 
     return;
   }
 
-  if (!session || !session.access_token) {
-
-    return promptLoginRequired(res, "Access token is required");
+  if (!session?.access_token) {
+    return promptLoginRequired(res, "Missing access_token in session");
   }
-
-  const proxyCreds = await getUserCredentials(session.user_id, req);
-
-  if (!proxyCreds) {
-    return promptLoginRequired(res, "User not found");
+  else if (!session?.api_key) {
+    return promptLoginRequired(res, "Missing api_key in session");
   }
 
   const options = {
@@ -703,7 +717,7 @@ const server = http.createServer(async (req, res) => {
       "X-Kite-Version": "3",
 
       "Authorization":
-        `token ${proxyCreds.api_key}:${session.access_token}`,
+        `token ${session.api_key}:${session.access_token}`,
 
       "Content-Type": "application/json",
 
@@ -722,87 +736,90 @@ const server = http.createServer(async (req, res) => {
 
       kiteRes.on("end", async () => {
 
-        const response = JSON.parse(body);
+        try {
+          const response = JSON.parse(body);
 
-        if (
-          response?.status === "error" &&
-          response?.error_type === "TokenException"
-        ) {
+          if (
+            response?.status === "error" &&
+            response?.error_type === "TokenException" || response?.error_type === "PermissionException"
+          ) {
 
-          return promptLoginRequired(res, response?.message);
-        }
-
-        // ── Live-quote enrichment for holdings, trimmed profile merge ──
-        const parsedRouteUrl = new URL(req.url, "http://placeholder.local");
-        const isHoldingsRoute = parsedRouteUrl.pathname === "/portfolio/holdings";
-        const isProfileRoute = parsedRouteUrl.pathname === "/user/profile";
-
-        if (
-          isHoldingsRoute &&
-          response?.status === "success" &&
-          Array.isArray(response.data)
-        ) {
-          try {
-            response.data = await enrichWithLiveQuotes(response.data);
-          } catch (err) {
-            console.log(
-              "⚠️  Unable to fetch live quotes from Yahoo Finance, hence serving from Kite:",
-              err.message
-            );
+            return promptLoginRequired(res, "Zerodha: " + response?.message);
           }
 
-          res.writeHead(kiteRes.statusCode, {
-            "Content-Type": "application/json",
-          });
-          res.end(JSON.stringify(response));
-          return;
-        }
+          // ── Live-quote enrichment for holdings, trimmed profile merge ──
+          const isHoldingsRoute = parsedRouteUrl.pathname === "/portfolio/holdings";
+          const isProfileRoute = parsedRouteUrl.pathname === "/user/profile";
 
-        if (
-          isProfileRoute &&
-          response?.status === "success" &&
-          response.data
-        ) {
-          const userRows = await sql`SELECT full_name FROM users WHERE id = ${session.user_id}`;
+          if (
+            isHoldingsRoute &&
+            response?.status === "success" &&
+            Array.isArray(response.data)
+          ) {
+            try {
+              response.data = await enrichWithLiveQuotes(response.data);
+            } catch (err) {
+              console.log(
+                "⚠️  Unable to fetch live quotes from Yahoo Finance, hence serving from Kite:",
+                err.message
+              );
+            }
+            response.marketOpen = isIndianMarketOpen();
 
-          res.writeHead(kiteRes.statusCode, {
-            "Content-Type": "application/json",
-          });
-          res.end(JSON.stringify({
-            status: "success",
-            data: {
-              user_id: response.data.user_id,
-              avatar_url: response.data.avatar_url,
-              full_name: userRows[0]?.full_name || null,
-            },
-          }));
-          return;
-        }
-
-        res.writeHead(
-          kiteRes.statusCode,
-          {
-            "Content-Type": "application/json",
+            sendJson(res, kiteRes.statusCode, response);
+            return;
           }
-        );
 
-        res.end(body);
+          if (
+            isProfileRoute &&
+            response?.status === "success" &&
+            response.data
+          ) {
+            const userRows = await sql`SELECT full_name FROM users WHERE id = ${session.user_id}`;
+
+            let cash = 0;
+            try {
+              const res = await fetch(req.headers.referer + "user/margins/equity", {
+                headers: req.headers
+              });
+              const json = await res.json();
+              cash = json?.data?.net || 0;
+            } catch (err) {
+              console.log("⚠️  Unable to fetch Kite margins:", err.message);
+            }
+
+            sendJson(res, kiteRes.statusCode, {
+              status: "success",
+              data: {
+                user_id: response.data.user_id,
+                avatar_url: response.data.avatar_url,
+                full_name: userRows[0]?.full_name || null,
+                cash,
+              },
+            });
+            return;
+          }
+
+          sendJson(res, kiteRes.statusCode, response);
+        } catch (err) {
+          console.log(`❌ ${req.method} ${parsedRouteUrl.pathname} ERROR:`);
+          console.log(err.message);
+
+          sendJson(res, 500, { status: "error", message: err.message });
+          return;
+        }
       });
     });
 
   proxy.on("error", (err) => {
 
     console.log("❌ PROXY ERROR:");
-    console.log(err);
+    console.log(err.message);
 
-    res.writeHead(502, {
-      "Content-Type": "application/json",
-    });
-
-    res.end(JSON.stringify({
+    sendJson(res, 502, {
       status: "error",
       message: err.message,
-    }));
+    });
   });
 
   req.pipe(proxy);
