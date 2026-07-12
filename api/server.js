@@ -557,12 +557,17 @@ async function handleForward(req, res) {
   try {
     const body = await readJsonBody(req);
     const from = (body.data.from || "").trim();
+    const to = body.data.to[0];
+    const subject = (body.data.subject || "").trim();
     const emailId = (body.data.email_id || "").trim();
 
-    await resend.emails.receiving.forward({
-      emailId,
-      from,
-      to: process.env.SUPPORT_EMAIL
+    const { data } = await resend.emails.receiving.get(emailId);
+    await resend.emails.send({
+      from: to,
+      to: process.env.SUPPORT_EMAIL,
+      replyTo: from,
+      subject,
+      html: data.html || `<pre>${data.text}</pre>`,
     });
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
