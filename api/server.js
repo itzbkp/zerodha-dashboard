@@ -127,6 +127,7 @@ function sendEmail(templateId, email, variables) {
         variables: variables,
       },
     }) : JSON.stringify({
+      from: variables.receiver,
       to: email,
       reply_to: variables.email,
       subject: variables.subject,
@@ -551,7 +552,7 @@ async function handleSupport(req, res) {
       }
     }).convert());
 
-    await sendEmail("support", process.env.FORWARD_EMAIL, { email, name, query });
+    await sendEmail("support", process.env.SUPPORT_EMAIL, { email, name, query });
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
     console.log("❌ POST /api/support ERROR:");
@@ -564,10 +565,11 @@ async function handleForward(req, res) {
   try {
     const body = await readJsonBody(req);
     const email = (body.data.from || "").trim();
+    const receiver = (body.data.to || "").trim();
     const subject = (body.data.subject || "").trim();
     const html = body.data.html || `<pre>${body.data.text}</pre>`;
 
-    await sendEmail(undefined, process.env.FORWARD_EMAIL, { email, subject, html });
+    await sendEmail(undefined, process.env.SUPPORT_EMAIL, { email, receiver, subject, html });
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
     console.log("❌ POST /api/forward ERROR:");
