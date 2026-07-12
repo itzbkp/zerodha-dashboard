@@ -1,4 +1,5 @@
 require("dotenv").config({ quiet: true });
+const { Resend } = require("resend");
 const { neon } = require("@neondatabase/serverless");
 const { QuillDeltaToHtmlConverter } = require("quill-delta-to-html");
 const YahooFinance = require("yahoo-finance2").default;
@@ -17,6 +18,8 @@ const KITE_HOST = "api.kite.trade";
 const MOCK_DATA = "MOCK_DATA";
 
 const sql = neon(process.env.DATABASE_URL);
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Market hours check (NSE/BSE) ────────────────────
 function isIndianMarketOpen() {
@@ -113,27 +116,16 @@ async function uploadImagesToImgBB(html) {
 }
 
 function sendEmail(templateId, email, variables) {
-  return fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: templateId ? JSON.stringify({
+  return resend.emails.send(
+    {
       to: email,
-      reply_to: templateId === "support" ? variables.email : undefined,
+      replyTo: templateId === "support" ? variables.email : undefined,
       template: {
         id: templateId,
-        variables: variables,
+        variables,
       },
-    }) : JSON.stringify({
-      from: variables.receiver,
-      to: email,
-      reply_to: variables.email,
-      subject: variables.subject,
-      html: variables.html,
-    }),
-  });
+    }
+  );
 }
 
 function serveFiles(req, res) {
@@ -564,12 +556,14 @@ async function handleSupport(req, res) {
 async function handleForward(req, res) {
   try {
     const body = await readJsonBody(req);
-    const email = (body.data.from || "").trim();
-    const receiver = body.data.to[0];
-    const subject = (body.data.subject || "").trim();
-    const html = body.data.html || `<pre>${body.data.text}</pre>`;
+    const from = (body.data.from || "").trim();
+    const emailId = (body.data.email_id || "").trim();
 
-    await sendEmail(undefined, process.env.SUPPORT_EMAIL, { email, receiver, subject, html });
+    await resend.emails.receiving.forward({
+      emailId,
+      from,
+      to: process.env.SUPPORT_EMAIL
+    });
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
     console.log("❌ POST /api/forward ERROR:");
