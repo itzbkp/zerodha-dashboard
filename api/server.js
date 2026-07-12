@@ -562,12 +562,24 @@ async function handleForward(req, res) {
     const emailId = (body.data.email_id || "").trim();
 
     const { data } = await resend.emails.receiving.get(emailId);
+    const { data: attachmentList } = await resend.emails.receiving.attachments.list({ emailId });
+    const attachments = await Promise.all(
+      (attachmentList?.data || [])
+        .filter((a) => a.content_disposition === "attachment")
+        .map(async (a) => {
+          const fileRes = await fetch(a.download_url);
+          const buf = Buffer.from(await fileRes.arrayBuffer());
+          return { filename: a.filename, content: buf.toString("base64") };
+        })
+    );
+
     await resend.emails.send({
       from: to,
       to: process.env.SUPPORT_EMAIL,
       replyTo: from,
       subject,
       html: await uploadImagesToImgBB(data.html) || `<pre>${data.text}</pre>`,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
     sendJson(res, 200, { status: "ok" });
   } catch (err) {
