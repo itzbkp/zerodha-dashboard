@@ -567,7 +567,7 @@ async function handleForward(req, res) {
       to: process.env.SUPPORT_EMAIL,
       replyTo: from,
       subject,
-      html: data.html || `<pre>${data.text}</pre>`,
+      html: await uploadImagesToImgBB(data.html) || `<pre>${data.text}</pre>`,
     });
     sendJson(res, 200, { status: "ok" });
   } catch (err) {

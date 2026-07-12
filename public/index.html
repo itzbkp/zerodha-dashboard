@@ -231,6 +231,13 @@
       .stat-pnl-r:hover {
         background: rgba(244, 67, 54, 0.12);
       }
+      .breadth-hover:hover {
+        background: linear-gradient(
+          to right,
+          rgba(76, 175, 80, 0.12) var(--breadth-pct),
+          rgba(244, 67, 54, 0.12) var(--breadth-pct)
+        );
+      }
       #stat-invested:hover {
         background: rgba(56, 126, 209, 0.12);
       }
@@ -256,6 +263,22 @@
       }
       .stat-pnl-r.weight-active {
         box-shadow: inset 0 -3px 0 0 #f44336;
+      }
+      .breadth-hover.weight-active {
+        box-shadow: none;
+      }
+      .breadth-hover.weight-active::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(
+          to right,
+          #4caf50 var(--breadth-pct),
+          #f44336 var(--breadth-pct)
+        );
       }
       @keyframes pulse {
         0%,
@@ -460,6 +483,7 @@
       .stat {
         padding: 18px 24px;
         border-right: 1px solid #4a4a4a;
+        position: relative;
       }
       .stat:last-child {
         border-right: none;
@@ -1693,11 +1717,30 @@
         applyWeightMode();
       }
 
+      function computeBreadth() {
+        const totalCount = H.length || 0;
+        const dayGainers = H.filter((h) => h.day_change >= 0).length;
+        const totalGainers = H.filter((h) => h.pnl >= 0).length;
+        const dayBreadthPct = (dayGainers / totalCount) * 100 || 0;
+        const totalBreadthPct = (totalGainers / totalCount) * 100 || 0;
+        return {
+          totalCount,
+          dayGainers,
+          totalGainers,
+          dayBreadthPct,
+          totalBreadthPct
+        };
+      }
+
       function updatePnlSummary() {
+        const { dayBreadthPct, totalBreadthPct } = computeBreadth();
+
         const statDay = document.getElementById("stat-day");
         const tdcPct = document.getElementById("tdc-pct");
         const tdcBreadth = document.getElementById("tdc-breadth");
         if (statDay && tdcPct && tdcBreadth) {
+          statDay.style.setProperty("--breadth-pct", dayBreadthPct + "%");
+          statDay.classList.toggle("breadth-hover", dayPref === "dayBr");
           tdcPct.style.display = dayPref === "dayBr" ? "none" : "";
           tdcBreadth.style.display = dayPref === "dayBr" ? "" : "none";
         }
@@ -1705,6 +1748,8 @@
         const pnlPct = document.getElementById("pnl-pct");
         const pnlBreadth = document.getElementById("pnl-breadth");
         if (statTotal && pnlPct && pnlBreadth) {
+          statTotal.style.setProperty("--breadth-pct", totalBreadthPct + "%");
+          statTotal.classList.toggle("breadth-hover", totalPref === "totalBr");
           pnlPct.style.display = totalPref === "totalBr" ? "none" : "";
           pnlBreadth.style.display = totalPref === "totalBr" ? "" : "none";
         }
@@ -2037,11 +2082,13 @@
         pnlB.className = "pct-badge " + (tp >= 0 ? "pct-g" : "pct-r");
 
         // ── Market breadth (with hover tooltip showing raw up/down counts) ──
-        const totalCount = H.length || 0;
-        const dayGainers = H.filter((h) => h.day_change >= 0).length;
-        const totalGainers = H.filter((h) => h.pnl >= 0).length;
-        const dayBreadthPct = (dayGainers / totalCount) * 100 || 0;
-        const totalBreadthPct = (totalGainers / totalCount) * 100 || 0;
+        const {
+          totalCount,
+          dayGainers,
+          totalGainers,
+          dayBreadthPct,
+          totalBreadthPct
+        } = computeBreadth();
 
         const dayLosers = totalCount - dayGainers;
         const tdcBreadthEl = document.getElementById("tdc-breadth");
