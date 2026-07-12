@@ -565,7 +565,7 @@ async function handleForward(req, res) {
   try {
     const body = await readJsonBody(req);
     const email = (body.data.from || "").trim();
-    const receiver = (body.data.to || "").trim();
+    const receiver = body.data.to[0];
     const subject = (body.data.subject || "").trim();
     const html = body.data.html || `<pre>${body.data.text}</pre>`;
 
