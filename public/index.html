@@ -6,6 +6,7 @@
     <title>Zerodha Dashboard</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      @import url("https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css");
 
       * {
         margin: 0;
@@ -230,9 +231,6 @@
       .stat-pnl-r:hover {
         background: rgba(244, 67, 54, 0.12);
       }
-      .breadth-active {
-        filter: grayscale(1);
-      }
       #stat-invested:hover {
         background: rgba(56, 126, 209, 0.12);
       }
@@ -372,6 +370,17 @@
       .profile-user-sub {
         color: #8a8a8a;
         font-size: 11px;
+        margin-top: 1px;
+      }
+      .profile-user-sub svg {
+        position: relative;
+        top: 0.15px;
+        left: 0.75px;
+        margin-right: 2.25px;
+      }
+      .profile-user-sub span {
+        letter-spacing: 0.75px;
+        font-size: 12px;
       }
       .profile-menu-section-label {
         font-size: 11px;
@@ -406,6 +415,10 @@
       }
       .profile-tags-actions .chip:last-child {
         border-right: none;
+      }
+      .help-icon {
+        font-size: 16px;
+        line-height: 1;
       }
       .info-icon {
         font-size: 15px;
@@ -848,6 +861,110 @@
         background: #c4302d;
         flex: 1;
       }
+      .qr-code {
+        display: block;
+        filter: grayscale(1);
+        width: 220px;
+        margin: 20px auto 8px;
+        box-shadow: 0 0 5px 2px grey;
+      }
+      #help-modal .ql-toolbar {
+        border-color: #4a4a4a;
+        border-radius: 8px 8px 0 0;
+        background: #1a1a1a;
+        margin-top: 12px;
+        display: flex;
+        justify-content: space-between;
+      }
+      #help-modal .ql-toolbar::after {
+        display: none;
+      }
+      #help-modal .ql-formats {
+        margin-right: 0px;
+      }
+      #help-modal .ql-picker-label {
+        background: #1a1a1a;
+        color: #d4d4d4;
+      }
+      #help-modal .ql-expanded .ql-picker-label {
+        border-color: #4a4a4a;
+      }
+      #help-modal .ql-picker-options {
+        background: #1a1a1a;
+        border: 1px solid #4a4a4a;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+      #help-modal .ql-picker-item {
+        color: #d4d4d4;
+      }
+      #help-modal .ql-picker-item:hover {
+        color: #2d5fc4;
+      }
+      #help-modal .ql-selected {
+        color: #2d5fc4;
+      }
+      #help-modal .ql-picker-label:hover {
+        color: #2d5fc4;
+      }
+      #help-modal .ql-bold {
+        position: relative;
+      }
+      #help-modal .ql-stroke {
+        stroke: #d4d4d4;
+      }
+      #help-modal button:hover .ql-stroke {
+        stroke: #2d5fc4;
+      }
+      #help-modal .ql-fill {
+        fill: #d4d4d4;
+      }
+      #help-modal button:hover .ql-fill {
+        fill: #2d5fc4;
+      }
+      #help-modal .ql-container {
+        border-color: #4a4a4a;
+        border-radius: 0 0 8px 8px;
+        font-family: inherit;
+        font-size: 13px;
+        overflow: hidden;
+      }
+      #help-modal .ql-editor {
+        min-height: 120px;
+        max-height: 240px;
+        overflow-y: auto;
+        background: #1a1a1a;
+        color: #d4d4d4;
+      }
+      #help-modal .ql-editor.ql-blank::before {
+        color: #6a6a6a;
+        font-style: normal;
+      }
+      #help-modal .ql-tooltip {
+        position: fixed;
+        top: 50% !important;
+        left: 50% !important;
+        background: #1a1a1a;
+        border-color: #4a4a4a;
+        border-radius: 8px;
+        box-shadow: none;
+        color: #d4d4d4;
+        transform: translate(-50%, -50%);
+        z-index: 99999;
+      }
+      #help-modal .ql-tooltip a {
+        color: #2d5fc4;
+      }
+      #help-modal .ql-tooltip a::before,
+      #help-modal .ql-tooltip a::after {
+        text-decoration: underline;
+      }
+      #help-modal input {
+        border: 1px solid #4a4a4a;
+        border-radius: 6px;
+        outline: none;
+        color: #d4d4d4;
+        background: #1a1a1a;
+      }
       .table-wrap col:nth-child(1) {
         width: 12.5%;
       }
@@ -856,6 +973,14 @@
       }
       .table-wrap col:nth-child(n + 3) {
         width: 11.4375%;
+      }
+      #login-userid-input,
+      #signup-userid-input {
+        text-transform: uppercase;
+      }
+      #login-userid-input::placeholder,
+      #signup-userid-input::placeholder {
+        text-transform: none;
       }
       .login-hint-text {
         color: #6a6a6a;
@@ -1080,6 +1205,15 @@
                     <span class="profile-user-sub" id="profile-user-sub"></span>
                   </span>
                 </a>
+                <div
+                  class="profile-menu-item"
+                  id="menu-login-item"
+                  style="display: none"
+                  onclick="openLoginModal()"
+                >
+                  <span class="arrow-icon">▶</span>
+                  <span>Login</span>
+                </div>
                 <div class="profile-menu-section-label">
                   Groups | Sectors | Tags
                 </div>
@@ -1097,14 +1231,9 @@
                     ><span class="icon-edit">✎</span><span>Edit</span></span
                   >
                 </div>
-                <div
-                  class="profile-menu-item"
-                  id="menu-login-item"
-                  style="display: none"
-                  onclick="openLoginModal()"
-                >
-                  <span class="arrow-icon">▶</span>
-                  <span>Login</span>
+                <div class="profile-menu-item" onclick="openHelpModal()">
+                  <span class="help-icon">✉︎</span>
+                  <span>Support</span>
                 </div>
                 <div class="profile-menu-item" onclick="openInfoModal()">
                   <span class="info-icon">ⓘ</span>
@@ -1190,7 +1319,7 @@
               <span>0</span><span class="dec">.00</span>
             </div>
             <span class="pct-badge pct-g" id="tdc-pct">+0.00%</span>
-            <span class="pct-badge pct-g" id="tdc-breadth" style="display: none"
+            <span class="pct-badge pct-r" id="tdc-breadth" style="display: none"
               >0.00% ▼</span
             >
           </div>
@@ -1208,7 +1337,7 @@
               <span>0</span><span class="dec">.00</span>
             </div>
             <span class="pct-badge pct-g" id="pnl-pct">+0.00%</span>
-            <span class="pct-badge pct-g" id="pnl-breadth" style="display: none"
+            <span class="pct-badge pct-r" id="pnl-breadth" style="display: none"
               >0.00% ▼</span
             >
           </div>
@@ -1343,36 +1472,53 @@
           <h3>Sign Up</h3>
           <span class="modal-close" onclick="closeSignupModal()">×</span>
         </div>
-        <ul class="info-points">
-          <li>Track your own Zerodha holdings, not a demo.</li>
-          <li>Real-time P&amp;L, live quotes, and custom tags.</li>
-          <li>We'll reach out once your account is ready.</li>
-        </ul>
-        <div class="add-tag-row">
-          <input
-            type="email"
-            id="signup-email-input"
-            placeholder="Email Address"
-          />
+        <div id="signup-form">
+          <ul class="info-points">
+            <li>Track your own Zerodha holdings, not a demo.</li>
+            <li>Real-time P&amp;L, live quotes, and custom tags.</li>
+            <li>We'll reach out once your account is ready.</li>
+          </ul>
+          <div class="add-tag-row">
+            <input
+              type="email"
+              id="signup-email-input"
+              placeholder="Email Address"
+              onkeydown="if (event.key === 'Enter') submitSignup();"
+            />
+          </div>
+          <div class="add-tag-row">
+            <input
+              type="text"
+              id="signup-name-input"
+              placeholder="Display Name"
+              onkeydown="if (event.key === 'Enter') submitSignup();"
+            />
+          </div>
+          <div class="add-tag-row">
+            <input
+              type="text"
+              id="signup-userid-input"
+              placeholder="Zerodha User ID"
+              onkeydown="if (event.key === 'Enter') submitSignup();"
+            />
+          </div>
+          <div class="add-tag-row">
+            <button class="btn-add btn-flex-1" onclick="submitSignup()">
+              Join Us
+            </button>
+          </div>
         </div>
-        <div class="add-tag-row">
-          <input
-            type="text"
-            id="signup-name-input"
-            placeholder="Display Name"
+        <div id="signup-qr" style="display: none">
+          <ul class="info-points">
+            <li>You're on the list — thanks for signing up!</li>
+            <li>Scan the QR code to join our updates channel.</li>
+            <li>We'll notify you the moment your account is ready.</li>
+          </ul>
+          <img
+            class="qr-code"
+            src="qr-code.png"
+            alt="UPI ID: mr.n.bkp@okaxis"
           />
-        </div>
-        <div class="add-tag-row">
-          <input
-            type="text"
-            id="signup-userid-input"
-            placeholder="Zerodha User ID"
-          />
-        </div>
-        <div class="add-tag-row">
-          <button class="btn-add btn-flex-1" onclick="submitSignup()">
-            Join Us
-          </button>
         </div>
       </div>
     </div>
@@ -1435,8 +1581,34 @@
       </div>
     </div>
 
+    <div class="modal-overlay" id="help-modal">
+      <div class="modal">
+        <div class="modal-header modal-header-centered">
+          <h3>Help</h3>
+          <span class="modal-close" onclick="closeHelpModal()">×</span>
+        </div>
+        <div class="add-tag-row">
+          <input
+            type="email"
+            id="help-email-input"
+            placeholder="Email Address"
+          />
+        </div>
+        <div class="add-tag-row">
+          <input type="text" id="help-name-input" placeholder="Your Name" />
+        </div>
+        <div class="help-editor" id="help-editor"></div>
+        <div class="add-tag-row">
+          <button class="btn-add btn-flex-1" onclick="submitHelp()">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast-container" id="toast-container"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
     <script>
       // ── State ─────────────────────────────────────────
       let H = [];
@@ -1457,6 +1629,7 @@
       let totalPref = "total"; // "total" | "totalBr"
       let stubRibbonDismissed = false;
       let toastShown = false;
+      let signupCompleted = false;
       let cashMargin = 0;
 
       function dismissStubRibbon() {
@@ -1525,7 +1698,6 @@
         const tdcPct = document.getElementById("tdc-pct");
         const tdcBreadth = document.getElementById("tdc-breadth");
         if (statDay && tdcPct && tdcBreadth) {
-          statDay.classList.toggle("breadth-active", dayPref === "dayBr");
           tdcPct.style.display = dayPref === "dayBr" ? "none" : "";
           tdcBreadth.style.display = dayPref === "dayBr" ? "" : "none";
         }
@@ -1533,7 +1705,6 @@
         const pnlPct = document.getElementById("pnl-pct");
         const pnlBreadth = document.getElementById("pnl-breadth");
         if (statTotal && pnlPct && pnlBreadth) {
-          statTotal.classList.toggle("breadth-active", totalPref === "totalBr");
           pnlPct.style.display = totalPref === "totalBr" ? "none" : "";
           pnlBreadth.style.display = totalPref === "totalBr" ? "" : "none";
         }
@@ -1746,7 +1917,29 @@
           if (avatarBtn) avatarBtn.innerHTML = avatarHtml;
           if (avatarLg) avatarLg.innerHTML = avatarHtml;
           if (nameEl) nameEl.textContent = p.full_name || "";
-          if (subEl) subEl.textContent = p.user_id || "";
+          if (subEl) {
+            if (p.isStubbed)
+              subEl.innerHTML = `
+                <span class="linkedin-icon">
+                  <svg height="10" width="10" viewBox="0 0 382 382">
+                    <path
+                      fill="#2d5fc4"
+                      d="M347.445,0H34.555C15.471,0,0,15.471,0,34.555v312.889C0,366.529,15.471,382,34.555,382h312.889
+	C366.529,382,382,366.529,382,347.444V34.555C382,15.471,366.529,0,347.445,0z M118.207,329.844c0,5.554-4.502,10.056-10.056,10.056
+	H65.345c-5.554,0-10.056-4.502-10.056-10.056V150.403c0-5.554,4.502-10.056,10.056-10.056h42.806
+	c5.554,0,10.056,4.502,10.056,10.056V329.844z M86.748,123.432c-22.459,0-40.666-18.207-40.666-40.666S64.289,42.1,86.748,42.1
+	s40.666,18.207,40.666,40.666S109.208,123.432,86.748,123.432z M341.91,330.654c0,5.106-4.14,9.246-9.246,9.246H286.73
+	c-5.106,0-9.246-4.14-9.246-9.246v-84.168c0-12.556,3.683-55.021-32.813-55.021c-28.309,0-34.051,29.066-35.204,42.11v97.079
+	c0,5.106-4.139,9.246-9.246,9.246h-44.426c-5.106,0-9.246-4.14-9.246-9.246V149.593c0-5.106,4.14-9.246,9.246-9.246h44.426
+	c5.106,0,9.246,4.14,9.246,9.246v15.655c10.497-15.753,26.097-27.912,59.312-27.912c73.552,0,73.131,68.716,73.131,106.472
+	L341.91,330.654L341.91,330.654z"
+                    />
+                  </svg>
+                  <span>itzbkp</span>
+                </span>
+              `;
+            else subEl.textContent = p.user_id || "";
+          }
 
           cashMargin = p.cash || 0;
           renderSummary();
@@ -1852,11 +2045,15 @@
 
         const dayLosers = totalCount - dayGainers;
         const tdcBreadthEl = document.getElementById("tdc-breadth");
-        tdcBreadthEl.innerHTML = `${dayBreadthPct.toFixed(2)}% ${dayBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${dayGainers} ↑</span> <span class="g">${dayLosers} ↓</span></span>`;
+        tdcBreadthEl.innerHTML = `${dayBreadthPct.toFixed(2)}% ${dayBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${dayGainers} ↑</span> <span class="r">${dayLosers} ↓</span></span>`;
+        tdcBreadthEl.className =
+          "pct-badge " + (dayBreadthPct >= 50 ? "pct-g" : "pct-r");
 
         const totalLosers = totalCount - totalGainers;
         const pnlBreadthEl = document.getElementById("pnl-breadth");
-        pnlBreadthEl.innerHTML = `${totalBreadthPct.toFixed(2)}% ${totalBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${totalGainers} ↑</span> <span class="g">${totalLosers} ↓</span></span>`;
+        pnlBreadthEl.innerHTML = `${totalBreadthPct.toFixed(2)}% ${totalBreadthPct >= 50 ? "▲" : "▼"}<span class="tooltip"><span class="g">${totalGainers} ↑</span> <span class="r">${totalLosers} ↓</span></span>`;
+        pnlBreadthEl.className =
+          "pct-badge " + (totalBreadthPct >= 50 ? "pct-g" : "pct-r");
 
         updatePnlSummary();
       }
@@ -2370,6 +2567,95 @@
           closeInfoModal();
       });
 
+      let helpQuill = null;
+
+      function handleQuillImageUpload() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.onchange = () => {
+          const file = input.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const range = helpQuill.getSelection(true);
+            helpQuill.insertEmbed(range.index, "image", reader.result);
+            helpQuill.setSelection(range.index + 1);
+          };
+          reader.readAsDataURL(file);
+        };
+        input.click();
+      }
+
+      function getHelpQuill() {
+        if (helpQuill) return helpQuill;
+        helpQuill = new Quill("#help-editor", {
+          theme: "snow",
+          placeholder: "Description",
+          modules: {
+            toolbar: {
+              container: [
+                [{ size: ["small", false, "large"] }, "bold", "italic"],
+                [
+                  { list: "ordered" },
+                  { list: "bullet" },
+                  { indent: "-1" },
+                  { indent: "+1" }
+                ],
+                ["link", "image"]
+              ],
+              handlers: {
+                image: handleQuillImageUpload
+              }
+            }
+          }
+        });
+        return helpQuill;
+      }
+
+      function openHelpModal() {
+        closeProfileMenu();
+        document.getElementById("help-email-input").value = "";
+        document.getElementById("help-name-input").value = "";
+        getHelpQuill().setText("");
+        document.getElementById("help-modal").classList.add("open");
+        setTimeout(() => {
+          document.getElementById("help-email-input").focus();
+        }, 50);
+      }
+
+      function closeHelpModal() {
+        document.getElementById("help-modal").classList.remove("open");
+        focusSearch();
+      }
+
+      document.getElementById("help-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("help-modal"))
+          closeHelpModal();
+      });
+
+      async function submitHelp() {
+        const email = document.getElementById("help-email-input").value.trim();
+        const name = document.getElementById("help-name-input").value.trim();
+        const isQueryEmpty = getHelpQuill().getText().trim() === "";
+        const query = getHelpQuill().getContents();
+        if (!email || !name || isQueryEmpty) return;
+
+        try {
+          const res = await fetch("/api/support", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, name, query })
+          });
+          if (!res.ok) throw new Error("Failed to send your message");
+
+          closeHelpModal();
+          showToast("Thanks! We'll get back to you soon.", "success", 4000);
+        } catch (e) {
+          showToast("Failed to send your message");
+        }
+      }
+
       // ── Modal: Login ───────────────────────────────────
       function openLoginModal() {
         closeProfileMenu();
@@ -2431,12 +2717,21 @@
           .value.trim();
         closeLoginModal();
         closeProfileMenu();
+        document.getElementById("signup-modal").classList.add("open");
+
+        if (signupCompleted) {
+          document.getElementById("signup-form").style.display = "none";
+          document.getElementById("signup-qr").style.display = "";
+          return;
+        }
+
+        document.getElementById("signup-form").style.display = "";
+        document.getElementById("signup-qr").style.display = "none";
         document.getElementById("signup-email-input").value = "";
         document.getElementById("signup-name-input").value = "";
         document.getElementById("signup-userid-input").value = prefillUserId
           ? loginUserId
           : "";
-        document.getElementById("signup-modal").classList.add("open");
         setTimeout(() => {
           document.getElementById("signup-email-input").focus();
         }, 50);
@@ -2462,8 +2757,21 @@
           .value.trim();
         if (!email || !name || !userId) return;
 
-        closeSignupModal();
-        showToast("Thanks! We'll be in touch soon.", "success", 4000);
+        document.getElementById("signup-form").style.display = "none";
+        document.getElementById("signup-qr").style.display = "";
+        try {
+          const res = await fetch("/api/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, name, userId })
+          });
+          if (!res.ok) throw new Error("Failed to sign up");
+
+          signupCompleted = true;
+          showToast("Thanks! Please check your email.", "success", 4000);
+        } catch (e) {
+          showToast("Failed to sign up");
+        }
       }
 
       // ── Modal: Assign tags ────────────────────────────
@@ -2503,7 +2811,11 @@
         }
 
         const regularTags = sorted.filter((t) => !t.startsWith("x-"));
-        const xTags = sorted.filter((t) => t.startsWith("x-"));
+        const xTags = sorted.filter(
+          (t) =>
+            t.startsWith("x-") &&
+            (t !== "x-cash" || stockTags[editingSymbol]?.includes("x-cash"))
+        );
 
         const renderPill = (t) => {
           const isSelected = assigned.includes(t);
@@ -2543,7 +2855,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ symbol: editingSymbol, tag })
           });
-          if (!res.ok) throw new Error("Failed to update tag");
+          if (!res.ok) throw new Error("Failed to update the tag");
         } catch (e) {
           stockTags[editingSymbol] = prev;
           persistTagsCache();
@@ -2597,10 +2909,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: val })
           });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error("Failed to create tag");
-          }
+          if (!res.ok) throw new Error("Failed to create the tag");
         } catch (e) {
           globalTags = globalTags.filter((t) => t !== val);
           persistTagsCache();
@@ -2674,10 +2983,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ newName })
           });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error("Failed to rename tag");
-          }
+          if (!res.ok) throw new Error("Failed to rename the tag");
         } catch (e) {
           globalTags = prevTags;
           stockTags = prevStock;
@@ -2756,7 +3062,7 @@
           const res = await fetch("/api/tags/" + encodeURIComponent(tag), {
             method: "DELETE"
           });
-          if (!res.ok) throw new Error("Failed to delete tag");
+          if (!res.ok) throw new Error("Failed to delete the tag");
         } catch (e) {
           globalTags = prevTags;
           stockTags = prevStock;

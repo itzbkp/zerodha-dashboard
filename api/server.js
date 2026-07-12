@@ -1,5 +1,6 @@
 require("dotenv").config({ quiet: true });
 const { neon } = require("@neondatabase/serverless");
+const { QuillDeltaToHtmlConverter } = require("quill-delta-to-html");
 const YahooFinance = require("yahoo-finance2").default;
 const MOCK_HOLDINGS = require("./mock-holdings.json");
 
@@ -77,6 +78,60 @@ async function enrichWithLiveQuotes(holdings, isStubbed) {
       day_change_percentage: dayChangePct,
       pnl: (lastPrice - h.average_price) * h.quantity,
     };
+  });
+}
+
+async function uploadImagesToImgBB(html) {
+  const regex = /<img([^>]+)src="data:(image\/[^;]+);base64,([^"]+)"([^>]*)>/g;
+  const matches = [...html.matchAll(regex)];
+
+  for (const match of matches) {
+    const [fullMatch, before, mime, base64, after] = match;
+
+    if (!["image/png", "image/jpeg", "image/heic", "image/heif"].includes(mime))
+      throw new Error("Invalid image type");
+
+    if (Buffer.byteLength(base64, "base64") > 2 * 1024 * 1024)
+      throw new Error("Image size exceeds 2 MB");
+
+    const formData = new FormData();
+    formData.append("image", base64);
+
+    const res = await fetch("https://api.imgbb.com/1/upload?key=" + process.env.IMGBB_API_KEY, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    if (!data.success)
+      throw new Error("Image upload failed");
+
+    html = html.replace(fullMatch, `<img${before}src="${data.data.url}"${after}>`);
+  }
+
+  return html;
+}
+
+function sendEmail(templateId, email, variables) {
+  return fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: templateId ? JSON.stringify({
+      to: email,
+      reply_to: templateId === "support" ? variables.email : undefined,
+      template: {
+        id: templateId,
+        variables: variables,
+      },
+    }) : JSON.stringify({
+      to: email,
+      reply_to: variables.email,
+      subject: variables.subject,
+      html: variables.html,
+    }),
   });
 }
 
@@ -426,6 +481,103 @@ async function handleCleanup(req, res, userId) {
   }
 }
 
+async function handleConfirmation(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const email = (body.email || "").trim();
+    const name = (body.name || "").trim();
+    const userId = (body.userId || "").trim();
+    if (!email || !name || !userId) {
+      return sendJson(res, 400, { status: "error", message: "email, name and userId required" });
+    }
+
+    await sendEmail("confirmation", email, { name, userId });
+    sendJson(res, 200, { status: "ok" });
+  } catch (err) {
+    console.log("❌ POST /api/confirmation ERROR:");
+    console.log(err.message);
+    sendJson(res, 500, { status: "error", message: err.message });
+  }
+}
+
+async function handleSignup(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const email = (body.email || "").trim();
+    const name = (body.name || "").trim();
+    const userId = (body.userId || "").trim();
+    if (!email || !name || !userId) {
+      return sendJson(res, 400, { status: "error", message: "email, name and userId required" });
+    }
+
+    await sql`INSERT INTO customers (email, full_name, user_id) VALUES (${email}, ${name}, ${userId})`;
+    await sendEmail("welcome", email, { name });
+    sendJson(res, 200, { status: "ok" });
+  } catch (err) {
+    console.log("❌ POST /api/signup ERROR:");
+    console.log(err.message);
+    sendJson(res, 500, { status: "error", message: err.message });
+  }
+}
+
+async function handleSupport(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const email = (body.email || "").trim();
+    const name = (body.name || "").trim();
+    const delta = body.query;
+    if (!email || !name || !delta)
+      return sendJson(res, 400, { status: "error", message: "email, name and query required" });
+    const query = await uploadImagesToImgBB(new QuillDeltaToHtmlConverter(delta.ops || [], {
+      inlineStyles: {
+        font: (font) => `font-family:${font}`,
+        size: {
+          small: "font-size:0.75em",
+          large: "font-size:1.5em",
+          huge: "font-size:2.5em"
+        },
+        color: (color) => `color:${color}`,
+        background: (bg) => `background-color:${bg}`,
+        align: (align) => `text-align:${align}`,
+        direction: (value, op) => {
+          if (value === "rtl") {
+            return "direction:rtl;text-align:inherit";
+          }
+        },
+        indent: (value, op) => {
+          const side = op.attributes.direction === "rtl" ? "right" : "left";
+          return `padding-${side}:${value * 3}em`;
+        }
+      }
+    }).convert());
+
+    await sendEmail("support", process.env.FORWARD_EMAIL, { email, name, query });
+    sendJson(res, 200, { status: "ok" });
+  } catch (err) {
+    console.log("❌ POST /api/support ERROR:");
+    console.log(err.message);
+    sendJson(res, 500, { status: "error", message: err.message });
+  }
+}
+
+async function handleForward(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const email = (body.data.from || "").trim();
+    const subject = (body.data.subject || "").trim();
+    const html = body.data.html || `<pre>${body.data.text}</pre>`;
+
+    await sendEmail(undefined, process.env.FORWARD_EMAIL, { email, subject, html });
+    sendJson(res, 200, { status: "ok" });
+  } catch (err) {
+    console.log("❌ POST /api/forward ERROR:");
+    console.log(err.message);
+    sendJson(res, 500, { status: "error", message: err.message });
+  }
+}
+
+let lastWasHS = false;
+
 const server = http.createServer(async (req, res) => {
 
   const requestStartedAt = Date.now();
@@ -434,7 +586,10 @@ const server = http.createServer(async (req, res) => {
   res.on("finish", () => {
     const elapsedMs = Date.now() - requestStartedAt;
     const statusCode = ["/portfolio/holdings", "/user/profile"].includes(req.url) && !session ? 304 : res.statusCode;
+    const isHS = req.url === "/portfolio/holdings" && statusCode < 400;
+    if (isHS && lastWasHS) return;
     console.log(`${req.method} ${req.url} → ${statusCode} (${elapsedMs}ms)`);
+    lastWasHS = isHS;
   });
 
   res.setHeader(
@@ -464,48 +619,64 @@ const server = http.createServer(async (req, res) => {
 
   // ── Tag API routes ──────────────────────────────────
   const parsedForTags = new URL(req.url, "http://placeholder.local");
-  const tagPathname = parsedForTags.pathname;
+  const pathname = parsedForTags.pathname;
 
-  if (tagPathname === "/api/tags" && req.method === "GET") {
+  if (pathname === "/api/tags" && req.method === "GET") {
     return handleGetTags(res, userId);
   }
 
   const isTagAmendmentRoute =
-    (tagPathname === "/api/tags" && req.method === "POST") ||
-    (tagPathname.startsWith("/api/tags/") && (req.method === "PUT" || req.method === "DELETE")) ||
-    (tagPathname === "/api/stock-tags" && (req.method === "POST" || req.method === "DELETE"));
+    (pathname === "/api/tags" && req.method === "POST") ||
+    (pathname.startsWith("/api/tags/") && (req.method === "PUT" || req.method === "DELETE")) ||
+    (pathname === "/api/stock-tags" && (req.method === "POST" || req.method === "DELETE"));
 
   if (isTagAmendmentRoute && !session) {
     return sendJson(res, 403, { status: "error", message: "Buy this dashboard to manage your tags" });
   }
 
-  if (tagPathname === "/api/tags" && req.method === "POST") {
+  if (pathname === "/api/tags" && req.method === "POST") {
     return handleCreateTag(req, res, userId);
   }
 
-  if (tagPathname.startsWith("/api/tags/") && req.method === "PUT") {
-    const oldName = decodeURIComponent(tagPathname.slice("/api/tags/".length));
+  if (pathname.startsWith("/api/tags/") && req.method === "PUT") {
+    const oldName = decodeURIComponent(pathname.slice("/api/tags/".length));
     return handleRenameTag(req, res, oldName, userId);
   }
 
-  if (tagPathname.startsWith("/api/tags/") && req.method === "DELETE") {
-    const name = decodeURIComponent(tagPathname.slice("/api/tags/".length));
+  if (pathname.startsWith("/api/tags/") && req.method === "DELETE") {
+    const name = decodeURIComponent(pathname.slice("/api/tags/".length));
     return handleDeleteTag(res, name, userId);
   }
 
-  if (tagPathname === "/api/stock-tags" && req.method === "POST") {
+  if (pathname === "/api/stock-tags" && req.method === "POST") {
     return handleAssignStockTag(req, res, userId);
   }
 
-  if (tagPathname === "/api/stock-tags" && req.method === "DELETE") {
+  if (pathname === "/api/stock-tags" && req.method === "DELETE") {
     return handleUnassignStockTag(req, res, userId);
   }
 
-  if (tagPathname === "/api/cleanup" && req.method === "POST") {
+  if (pathname === "/api/cleanup" && req.method === "POST") {
     return handleCleanup(req, res, userId);
   }
 
-  if (tagPathname === "/portfolio/holdings" && req.method === "GET" && !session) {
+  if (pathname === "/api/confirmation" && req.method === "POST") {
+    return handleConfirmation(req, res);
+  }
+
+  if (pathname === "/api/signup" && req.method === "POST") {
+    return handleSignup(req, res);
+  }
+
+  if (pathname === "/api/support" && req.method === "POST") {
+    return handleSupport(req, res);
+  }
+
+  if (pathname === "/api/forward" && req.method === "POST") {
+    return handleForward(req, res);
+  }
+
+  if (pathname === "/portfolio/holdings" && req.method === "GET" && !session) {
     const mockHoldings = await enrichWithLiveQuotes(MOCK_HOLDINGS, true);
     return sendJson(res, 200, {
       status: mockHoldings.status || "success",
@@ -515,10 +686,11 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
-  if (tagPathname === "/user/profile" && req.method === "GET" && !session) {
+  if (pathname === "/user/profile" && req.method === "GET" && !session) {
     return sendJson(res, 200, {
       status: "success",
       data: {
+        isStubbed: true,
         user_id: "",
         avatar_url: "https://s3.ap-south-1.amazonaws.com/zerodha-kite-blobs/avatars/zYRMQSdS4xxhhTeGgtzK5pfeAQY8Vfr0.png",
         full_name: "Barun Patro",
