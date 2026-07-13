@@ -1,15 +1,16 @@
 require("dotenv").config({ quiet: true });
 const { Resend } = require("resend");
+const { flagsClient } = require("@vercel/flags-core");
 const { neon } = require("@neondatabase/serverless");
 const { QuillDeltaToHtmlConverter } = require("quill-delta-to-html");
 const YahooFinance = require("yahoo-finance2").default;
 const MOCK_HOLDINGS = require("./mock-holdings.json");
 
 const http = require("http");
-const https = require("https");
-const fs = require("fs");
 const path = require("path");
+const https = require("https");
 const crypto = require("crypto");
+const fs = require("fs");
 
 const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
@@ -20,6 +21,93 @@ const MOCK_DATA = "MOCK_DATA";
 const sql = neon(process.env.DATABASE_URL);
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const activeRoutes = ["/api/forward", "/api/confirmation"];
+
+const offlineModePromise = (async () => {
+  try {
+    const result = await flagsClient.evaluate("offline-mode", false);
+    return result.value;
+  } catch (err) {
+    console.log("⚠️  Unable to evaluate offline-mode flag:", err.message);
+    return false;
+  }
+})();
+
+const OFFLINE_HTML = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zerodha Dashboard — Offline</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #111111;
+        color: #d4d4d4;
+        font-family: -apple-system, "Inter", sans-serif;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .card {
+        text-align: center;
+        padding: 40px 48px;
+        border: 1px solid #4a4a4a;
+        border-radius: 14px;
+        background: #161616;
+        max-width: 420px;
+      }
+      .status {
+        border: 1px solid #4a4a4a;
+        border-radius: 20px;
+        margin: auto;
+        padding: 6px 14px;
+        width: fit-content;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #f08a00;
+        display: inline-block;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 16px 0 8px;
+      }
+      p {
+        color: #8a8a8a;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="status"><span class="dot"></span><strong>Offline</strong></div>
+      <h1>We'll be back soon</h1>
+      <p>
+        The dashboard is currently undergoing scheduled maintenance. Please
+        check back shortly.
+      </p>
+    </div>
+  </body>
+</html>
+`;
 
 // ── Market hours check (NSE/BSE) ────────────────────
 function isIndianMarketOpen() {
@@ -294,8 +382,6 @@ function promptLoginRequired(res, message) {
   console.log("❌ " + message);
   sendJson(res, 401, { status: "Login-Required" });
 }
-
-// ── Tag DB helpers ──────────────────────────────────
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
@@ -634,6 +720,20 @@ const server = http.createServer(async (req, res) => {
   const parsedForTags = new URL(req.url, "http://placeholder.local");
   const pathname = parsedForTags.pathname;
 
+  if (!activeRoutes.includes(pathname)) {
+    const isOffline = await offlineModePromise;
+    if (isOffline) {
+      if (pathname === "/") {
+        res.writeHead(503, { "Content-Type": "text/html" });
+        res.end(OFFLINE_HTML);
+        return;
+      }
+      res.writeHead(503, { "Content-Type": "text/plain" });
+      res.end("Service temporarily unavailable.");
+      return;
+    }
+  }
+
   if (pathname === "/api/tags" && req.method === "GET") {
     return handleGetTags(res, userId);
   }
@@ -932,7 +1032,6 @@ const server = http.createServer(async (req, res) => {
             return promptLoginRequired(res, "Zerodha: " + response?.message);
           }
 
-          // ── Live-quote enrichment for holdings, trimmed profile merge ──
           const isHoldingsRoute = parsedRouteUrl.pathname === "/portfolio/holdings";
           const isProfileRoute = parsedRouteUrl.pathname === "/user/profile";
 
