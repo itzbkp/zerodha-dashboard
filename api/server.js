@@ -27,9 +27,10 @@ const activeRoutes = ["/api/forward", "/api/confirmation"];
 const offlineModePromise = (async () => {
   try {
     const result = await flagsClient.evaluate("offline-mode", false);
+    console.log("✅ Offline Mode: ", result.value);
     return result.value;
   } catch (err) {
-    console.log("⚠️  Unable to evaluate offline-mode flag:", err.message);
+    console.log("⚠️  Unable to fetch the offline-mode flag:", err.message);
     return false;
   }
 })();
