@@ -24,16 +24,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const activeRoutes = ["/api/forward", "/api/confirmation"];
 
-let flagCache = { value: false, expiresAt: 0 };
-
 async function isOfflineMode() {
-  if (Date.now() < flagCache.expiresAt) {
-    return flagCache.value;
-  }
   try {
     const result = await flagsClient.evaluate("offline-mode", false);
-    flagCache = { value: result.value, expiresAt: Date.now() + 10_000 };
-    return flagCache.value;
+    return result.value;
   } catch (err) {
     console.log("⚠️  Unable to fetch the offline-mode flag:", err.message);
     return false;
