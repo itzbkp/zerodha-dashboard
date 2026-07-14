@@ -690,8 +690,10 @@ const server = http.createServer(async (req, res) => {
     const isHoldingsRoute = req.url === "/portfolio/holdings" && statusCode < 400;
     if (isHoldingsRoute) {
       const loggingFlag = await rdb.getSet("log-flag", "1");
+      console.log("Redis: ", loggingFlag);
       if (loggingFlag === "1") return;
     } else {
+      console.log("Route: ", req.url);
       await rdb.set("log-flag", "0");
     }
     console.log(`${req.method} ${req.url} → ${statusCode} (${elapsedMs}ms)`);
