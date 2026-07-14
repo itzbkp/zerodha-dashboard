@@ -1,6 +1,7 @@
 require("dotenv").config({ quiet: true });
 const { Resend } = require("resend");
 const { flagsClient } = require("@vercel/flags-core");
+const { createClient } = require("redis");
 const { neon } = require("@neondatabase/serverless");
 const { QuillDeltaToHtmlConverter } = require("quill-delta-to-html");
 const YahooFinance = require("yahoo-finance2").default;
@@ -21,6 +22,9 @@ const MOCK_DATA = "MOCK_DATA";
 const sql = neon(process.env.DATABASE_URL);
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const rdb = createClient({ url: process.env.REDIS_URL });
+rdb.connect();
 
 const activeRoutes = ["/api/forward", "/api/confirmation"];
 
@@ -675,20 +679,22 @@ async function handleForward(req, res) {
   }
 }
 
-let lastWasHS = false;
-
 const server = http.createServer(async (req, res) => {
 
   const requestStartedAt = Date.now();
   const session = getSession(req);
 
-  res.on("finish", () => {
+  res.on("finish", async () => {
     const elapsedMs = Date.now() - requestStartedAt;
     const statusCode = ["/portfolio/holdings", "/user/profile"].includes(req.url) && !session ? 304 : res.statusCode;
-    const isHS = req.url === "/portfolio/holdings" && statusCode < 400;
-    if (isHS && lastWasHS) return;
+    const isHoldingsRoute = req.url === "/portfolio/holdings" && statusCode < 400;
+    if (isHoldingsRoute) {
+      const loggingFlag = await rdb.getSet("log-flag", "1");
+      if (loggingFlag === "1") return;
+    } else {
+      await rdb.set("log-flag", "0");
+    }
     console.log(`${req.method} ${req.url} → ${statusCode} (${elapsedMs}ms)`);
-    lastWasHS = isHS;
   });
 
   res.setHeader(
