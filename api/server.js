@@ -24,16 +24,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const activeRoutes = ["/api/forward", "/api/confirmation"];
 
-const offlineModePromise = (async () => {
+async function isOfflineMode() {
   try {
     const result = await flagsClient.evaluate("offline-mode", false);
-    console.log("✅ Offline Mode: ", result.value);
     return result.value;
   } catch (err) {
     console.log("⚠️  Unable to fetch the offline-mode flag:", err.message);
     return false;
   }
-})();
+}
 
 const OFFLINE_HTML = `<!doctype html>
 <html lang="en">
@@ -722,7 +721,7 @@ const server = http.createServer(async (req, res) => {
   const pathname = parsedForTags.pathname;
 
   if (!activeRoutes.includes(pathname)) {
-    const isOffline = await offlineModePromise;
+    const isOffline = await isOfflineMode();
     if (isOffline) {
       if (pathname === "/") {
         res.writeHead(503, { "Content-Type": "text/html" });
