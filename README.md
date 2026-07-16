@@ -2,7 +2,7 @@
 
 Live Portfolio Tracker for Zerodha - a self-hosted dashboard that connects to your Zerodha account via Kite Connect and shows your live holdings, P&L, and statistics in one place.
 
-**Live:** [0dash.vercel.app](https://0dash.vercel.app)
+🌐 **Visit Here -** [0dash.vercel.app](https://0dash.vercel.app)
 
 ## Tech Stack
 
