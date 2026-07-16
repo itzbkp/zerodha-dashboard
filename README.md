@@ -12,7 +12,9 @@ Live Portfolio Tracker for Zerodha - a self-hosted dashboard that connects to yo
 - **Email:** Resend + `quill-delta-to-html`
 - **Image hosting:** ImgBB
 - **Market data:** Yahoo Finance (for mock holdings)
-- **Hosting:** Vercel
+- **Web Hosting:** Vercel
+- **DNS Hosting:** Cloudflare
+- **Domain:** DigitalPlat
 
 ## Getting Started
 
