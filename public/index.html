@@ -38,7 +38,7 @@
         position: relative;
         top: -0.5px;
       }
-      .delete-confirm-text {
+      .delete-text {
         font-size: 13px;
         color: #b0b0b0;
         margin-bottom: 16px;
@@ -440,17 +440,44 @@
         border-right: none;
       }
       .help-icon {
-        font-size: 16px;
+        font-size: 17px;
         line-height: 1;
       }
       .info-icon {
-        font-size: 15px;
+        font-size: 16px;
+        font-weight: bold;
         line-height: 1;
+      }
+      .github-icon {
+        position: relative;
+        cursor: pointer;
+        top: 1.5px;
+        left: 2px;
+      }
+      .linkedin-icon {
+        position: relative;
+        cursor: pointer;
+        top: 1.5px;
+        left: 2px;
+      }
+      .github-icon + a,
+      .linkedin-icon + a {
+        color: #d4d4d4;
+        margin-left: 3px;
+        margin-right: 1px;
+        text-decoration: underline;
       }
       .arrow-icon {
         font-size: 15px;
         line-height: 1;
         margin-left: 2px;
+      }
+      .cost {
+        color: #4caf50;
+        font-weight: bold;
+      }
+      .cost span {
+        margin-right: 2px;
       }
       .modal-header-centered {
         position: relative;
@@ -464,13 +491,31 @@
       }
       .info-points {
         list-style: disc;
-        padding-left: 20px;
+        padding: 0 16px;
         font-size: 13px;
         line-height: 20px;
         color: #d4d4d4;
+        text-align: justify;
         display: flex;
         flex-direction: column;
         gap: 8px;
+      }
+      #signup-form .info-points {
+        margin-bottom: 20px;
+      }
+      .modal-note {
+        font-size: 13px;
+        line-height: 20px;
+        color: #d4d4d4;
+        text-align: justify;
+        margin-bottom: 16px;
+      }
+      .signup-readmore {
+        display: inline-block;
+        color: #d4d4d4;
+        text-decoration: underline;
+        font-size: 13px;
+        margin-bottom: 8px;
       }
 
       /* ── Summary ── */
@@ -791,7 +836,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 10px;
       }
       .modal-header h3 {
         font-size: 15px;
@@ -1497,10 +1542,73 @@
           <span class="modal-close" onclick="closeSignupModal()">×</span>
         </div>
         <div id="signup-form">
-          <ul class="info-points">
-            <li>Track your own Zerodha holdings, not a demo.</li>
-            <li>Real-time P&amp;L, live quotes, and custom tags.</li>
-            <li>We'll reach out once your account is ready.</li>
+          <p class="modal-note" style="margin-bottom: 0px">
+            Before we get started, please go through the following information
+            carefully:
+          </p>
+          <a
+            href="javascript:void(0)"
+            id="signup-readmore"
+            class="signup-readmore"
+            onclick="toggleSignupInfoPoints()"
+            >Read more</a
+          >
+          <ul class="info-points" id="signup-info-points" style="display: none">
+            <li>
+              You can access the dashboard by logging in with your Zerodha
+              account. As the authentication process is fully managed by Zerodha
+              using delegated access, we do not store any login credentails or
+              user information other than your Zerodha User ID.
+            </li>
+            <li>
+              The dashboard can be purchased for a one-time fee of
+              <span class="cost"><span>₹</span>1,000</span> for lifetime access.
+              However, if you'd want to host on your own version, the project is
+              fully open source on
+              <svg
+                class="github-icon"
+                height="12"
+                width="12"
+                viewBox="0 0 382 382"
+              >
+                <path
+                  fill="#6741D9"
+                  d="M191 0C85.5 0 0 85.5 0 191c0 84.4 54.7 156 130.5 181.3 9.6 1.8 13.1-4.2 13.1-9.3 0-4.6-.2-19.8-.3-35.9-53.1 11.5-64.3-22.5-64.3-22.5-8.7-22.1-21.2-28-21.2-28-17.3-11.8 1.3-11.6 1.3-11.6 19.1 1.3 29.2 19.6 29.2 19.6 17 29.1 44.6 20.7 55.5 15.8 1.7-12.3 6.7-20.7 12.1-25.5-42.4-4.8-87-21.2-87-94.5 0-20.9 7.5-38 19.7-51.4-2-4.8-8.5-24.2 1.9-50.5 0 0 16.1-5.2 52.8 19.6 15.3-4.2 31.7-6.3 48-6.4 16.3.1 32.7 2.2 48 6.4 36.7-24.8 52.8-19.6 52.8-19.6 10.4 26.3 3.9 45.7 1.9 50.5 12.3 13.4 19.7 30.5 19.7 51.4 0 73.5-44.7 89.6-87.2 94.3 6.9 6 13 17.6 13 35.5 0 25.6-.2 46.3-.2 52.6 0 5.2 3.5 11.2 13.2 9.3C327.3 347 382 275.4 382 191 382 85.5 296.5 0 191 0z"
+                />
+              </svg>
+              <a
+                href="https://github.com/itzbkp/zerodha-dashboard"
+                target="_blank"
+                >zerodha-dashboard</a
+              >.
+            </li>
+            <li>
+              We do not store your email address or send promotional emails. If
+              you do not wish to share your email address, you can directly
+              contact us via
+              <svg
+                class="linkedin-icon"
+                height="11"
+                width="11"
+                viewBox="0 0 382 382"
+              >
+                <path
+                  fill="#2d5fc4"
+                  d="M347.445,0H34.555C15.471,0,0,15.471,0,34.555v312.889C0,366.529,15.471,382,34.555,382h312.889
+	C366.529,382,382,366.529,382,347.444V34.555C382,15.471,366.529,0,347.445,0z M118.207,329.844c0,5.554-4.502,10.056-10.056,10.056
+	H65.345c-5.554,0-10.056-4.502-10.056-10.056V150.403c0-5.554,4.502-10.056,10.056-10.056h42.806
+	c5.554,0,10.056,4.502,10.056,10.056V329.844z M86.748,123.432c-22.459,0-40.666-18.207-40.666-40.666S64.289,42.1,86.748,42.1
+	s40.666,18.207,40.666,40.666S109.208,123.432,86.748,123.432z M341.91,330.654c0,5.106-4.14,9.246-9.246,9.246H286.73
+	c-5.106,0-9.246-4.14-9.246-9.246v-84.168c0-12.556,3.683-55.021-32.813-55.021c-28.309,0-34.051,29.066-35.204,42.11v97.079
+	c0,5.106-4.139,9.246-9.246,9.246h-44.426c-5.106,0-9.246-4.14-9.246-9.246V149.593c0-5.106,4.14-9.246,9.246-9.246h44.426
+	c5.106,0,9.246,4.14,9.246,9.246v15.655c10.497-15.753,26.097-27.912,59.312-27.912c73.552,0,73.131,68.716,73.131,106.472
+	L341.91,330.654L341.91,330.654z"
+                />
+              </svg>
+              <a href="https://www.linkedin.com/in/itzbkp" target="_blank"
+                >itzbkp</a
+              >.
+            </li>
           </ul>
           <div class="add-tag-row">
             <input
@@ -1534,9 +1642,18 @@
         </div>
         <div id="signup-qr" style="display: none">
           <ul class="info-points">
-            <li>You're on the list — thanks for signing up!</li>
-            <li>Scan the QR code to join our updates channel.</li>
-            <li>We'll notify you the moment your account is ready.</li>
+            <li>
+              We have sent you an onboarding email. Please check your inbox or
+              spam folder for further instructions.
+            </li>
+            <li>
+              You can also purchase this dashboard, by scanning the QR code
+              below, to complete your payment.
+            </li>
+            <li>
+              After successful payment, you'll receive a confirmation email with
+              your access details within 24–72 hours.
+            </li>
           </ul>
           <img
             class="qr-code"
@@ -1570,18 +1687,18 @@
       </div>
     </div>
 
-    <!-- Delete tag confirmation modal -->
-    <div class="modal-overlay" id="delete-confirm-modal">
+    <!-- Delete tag modal -->
+    <div class="modal-overlay" id="delete-modal">
       <div class="modal">
         <div class="modal-header">
           <h3>Delete Tag</h3>
           <span class="modal-close" onclick="closeDeleteConfirmModal()">×</span>
         </div>
-        <p id="delete-confirm-text" class="delete-confirm-text"></p>
+        <p id="delete-text" class="delete-text"></p>
         <div class="add-tag-row">
           <button
             class="btn-add btn-danger"
-            id="delete-confirm-btn"
+            id="delete-btn"
             onclick="confirmDeleteTag()"
           >
             Delete
@@ -1592,25 +1709,93 @@
 
     <!-- About modal -->
     <div class="modal-overlay" id="info-modal">
-      <div class="modal">
+      <div class="modal" style="width: 600px">
         <div class="modal-header modal-header-centered">
           <h3>Overview</h3>
           <span class="modal-close" onclick="closeInfoModal()">×</span>
         </div>
-        <ul class="info-points">
-          <li>Live holdings refresh automatically every few seconds.</li>
-          <li>Click a row to assign or edit tags for that stock.</li>
-          <li>Use the summary cards to switch between weightage views.</li>
+        <ul class="info-points" style="margin-bottom: 4px">
+          <p style="margin-bottom: 8px">
+            <b style="color: #f6461a">Zerodha</b>
+            <b style="color: #db342c">Dashboard</b> is a portfolio tracking tool
+            that helps you monitor your holdings, organize them into custom tags
+            or groups, and track their performance.
+          </p>
+          <li>
+            Prices are updated in real time. However, some prices may differ
+            from the Kite Holdings page, which often uses a different market
+            data source and caches data.
+          </li>
+          <li>
+            Tags can be selected and they can be filtered using the search bar,
+            and the table can be sorted by column. Double-click any empty area
+            of the dashboard to reset everything.
+          </li>
+          <li>
+            The "Total Investment" summary card also includes your available
+            cash balance.
+          </li>
+          <li>
+            Weightage is available for both individual stocks and custom tags.
+            Use the summary cards to switch between different weightage modes.
+            The Day P&L and Total P&L cards can also be toggled furthur to see
+            the market breadth mode.
+          </li>
+          <li>
+            Hover over the performance badges in the Day P&L and Total P&L
+            summary cards to see the pullers-to-draggers ratio.
+          </li>
+          <li>
+            Select any row in the table, to assign the stock to one or more
+            tags.
+          </li>
+          <li>
+            Individual stock charts can be accessed, by clicking the stock name,
+            in the table.
+          </li>
+          <li>
+            The Net Chg. column uses a special sorting mode that cycles between
+            the ascending order of losers and gainers. to keep track of the
+            closest underperformers or short term gainers. For regular ascending
+            or descending sorting, P&L column can be used.
+          </li>
         </ul>
       </div>
     </div>
 
+    <!-- Help modal -->
     <div class="modal-overlay" id="help-modal">
       <div class="modal">
         <div class="modal-header modal-header-centered">
           <h3>Help</h3>
           <span class="modal-close" onclick="closeHelpModal()">×</span>
         </div>
+        <p class="modal-note">
+          Your email address is used solely for initial communication purposes.
+          We never store it or send promotional emails to you. However, if you
+          don't wish to share your email address, you can also contact us via
+          <svg
+            class="linkedin-icon"
+            height="11"
+            width="11"
+            viewBox="0 0 382 382"
+          >
+            <path
+              fill="#2d5fc4"
+              d="M347.445,0H34.555C15.471,0,0,15.471,0,34.555v312.889C0,366.529,15.471,382,34.555,382h312.889
+            C366.529,382,382,366.529,382,347.444V34.555C382,15.471,366.529,0,347.445,0z M118.207,329.844c0,5.554-4.502,10.056-10.056,10.056
+            H65.345c-5.554,0-10.056-4.502-10.056-10.056V150.403c0-5.554,4.502-10.056,10.056-10.056h42.806
+            c5.554,0,10.056,4.502,10.056,10.056V329.844z M86.748,123.432c-22.459,0-40.666-18.207-40.666-40.666S64.289,42.1,86.748,42.1
+            s40.666,18.207,40.666,40.666S109.208,123.432,86.748,123.432z M341.91,330.654c0,5.106-4.14,9.246-9.246,9.246H286.73
+            c-5.106,0-9.246-4.14-9.246-9.246v-84.168c0-12.556,3.683-55.021-32.813-55.021c-28.309,0-34.051,29.066-35.204,42.11v97.079
+            c0,5.106-4.139,9.246-9.246,9.246h-44.426c-5.106,0-9.246-4.14-9.246-9.246V149.593c0-5.106,4.14-9.246,9.246-9.246h44.426
+            c5.106,0,9.246,4.14,9.246,9.246v15.655c10.497-15.753,26.097-27.912,59.312-27.912c73.552,0,73.131,68.716,73.131,106.472
+            L341.91,330.654L341.91,330.654z"
+            />
+          </svg>
+          <a href="https://www.linkedin.com/in/itzbkp" target="_blank">itzbkp</a
+          >.
+        </p>
         <div class="add-tag-row">
           <input
             type="email"
@@ -1965,11 +2150,10 @@
           if (subEl) {
             if (p.isStubbed)
               subEl.innerHTML = `
-                <span class="linkedin-icon">
-                  <svg height="10" width="10" viewBox="0 0 382 382">
-                    <path
-                      fill="#2d5fc4"
-                      d="M347.445,0H34.555C15.471,0,0,15.471,0,34.555v312.889C0,366.529,15.471,382,34.555,382h312.889
+                <svg height="10" width="10" viewBox="0 0 382 382">
+                  <path
+                    fill="#2d5fc4"
+                    d="M347.445,0H34.555C15.471,0,0,15.471,0,34.555v312.889C0,366.529,15.471,382,34.555,382h312.889
 	C366.529,382,382,366.529,382,347.444V34.555C382,15.471,366.529,0,347.445,0z M118.207,329.844c0,5.554-4.502,10.056-10.056,10.056
 	H65.345c-5.554,0-10.056-4.502-10.056-10.056V150.403c0-5.554,4.502-10.056,10.056-10.056h42.806
 	c5.554,0,10.056,4.502,10.056,10.056V329.844z M86.748,123.432c-22.459,0-40.666-18.207-40.666-40.666S64.289,42.1,86.748,42.1
@@ -1978,10 +2162,9 @@
 	c0,5.106-4.139,9.246-9.246,9.246h-44.426c-5.106,0-9.246-4.14-9.246-9.246V149.593c0-5.106,4.14-9.246,9.246-9.246h44.426
 	c5.106,0,9.246,4.14,9.246,9.246v15.655c10.497-15.753,26.097-27.912,59.312-27.912c73.552,0,73.131,68.716,73.131,106.472
 	L341.91,330.654L341.91,330.654z"
-                    />
-                  </svg>
-                  <span>itzbkp</span>
-                </span>
+                  />
+                </svg>
+                <span>itzbkp</span>
               `;
             else subEl.textContent = p.user_id || "";
           }
@@ -2351,40 +2534,28 @@
       const COLS = [
         {
           k: "tradingsymbol",
-          l: "Symbol",
-          str: true,
           fmt: (v, h) =>
             `<span class="sym" data-exchange="${h.exchange}" data-symbol="${v}" data-token="${h.instrument_token}">${v}<span class="chart-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fbc02d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5h6v6m0-6-8.5 8.5M19 14.5V18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h3.5"/></svg></span></span>`
         },
         {
           k: "quantity",
-          l: "Qty.",
-          num: true,
           fmt: (v) => `<span style="color:#5b8def">${v}</span>`
         },
         {
           k: "_inv",
-          l: "Invested",
-          num: true,
           fmt: (v) => `<span>${fc(v)}</span>`
         },
         {
           k: "average_price",
-          l: "Avg. cost",
-          num: true,
           fmt: (v) => `<span>${fc(v)}</span>`
         },
         {
           k: "last_price",
-          l: "LTP",
-          num: true,
           fmt: (v, r) =>
             `<span class="${r.day_change >= 0 ? "pos" : "neg"}">${fc(v)}</span>`
         },
         {
           k: "_wt",
-          l: "Total wtg.",
-          num: true,
           fmt: (v, r) => {
             if (weightMode === "invested") {
               return `<span style="color:lightskyblue">${r._wtInvested.toFixed(2)}%</span>`;
@@ -2404,23 +2575,17 @@
         },
         {
           k: "pnl",
-          l: "P&amp;L",
-          num: true,
           fmt: (v) =>
             `<span class="${v >= 0 ? "pp" : "pn"}">${v >= 0 ? "+" : "-"}${fc(v)}</span>`
         },
         {
           k: "_ret",
-          l: "Net chg.",
-          num: true,
           fmt: (v) => {
             return `<span style="color:${v >= 0 ? "lightgreen" : "lightcoral"}">${Math.abs(v).toFixed(2)}%</span>`;
           }
         },
         {
           k: "day_change_percentage",
-          l: "Day chg.",
-          num: true,
           fmt: (v) => {
             return `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${v.toFixed(2)}%</span>`;
           }
@@ -2532,7 +2697,7 @@
           data = [...data].sort(
             (a, b) =>
               sDir *
-              (col?.str
+              (col.k == "tradingsymbol"
                 ? a[sCol] < b[sCol]
                   ? -1
                   : a[sCol] > b[sCol]
@@ -2789,6 +2954,13 @@
         focusSearch();
       }
 
+      function toggleSignupInfoPoints() {
+        document.getElementById("signup-readmore").style.display = "none";
+        document.getElementById("signup-info-points").style.display = "";
+        document.querySelector("#signup-form .modal-note").style.margin =
+          "0 16px 8px";
+      }
+
       document.getElementById("signup-modal").addEventListener("click", (e) => {
         if (e.target === document.getElementById("signup-modal"))
           closeSignupModal();
@@ -2815,7 +2987,7 @@
           if (!res.ok) throw new Error("Failed to sign up");
 
           signupCompleted = true;
-          showToast("Thanks! Please check your email.", "success", 4000);
+          showToast("Thank you for signing up", "success", 4000);
         } catch (e) {
           showToast("Failed to sign up");
         }
@@ -3059,29 +3231,22 @@
 
       function deleteTag(tag) {
         pendingDeleteTag = tag;
-        document.getElementById("delete-confirm-text").textContent =
+        document.getElementById("delete-text").textContent =
           `Delete tag "${tag}"?`;
-        document.getElementById("delete-confirm-modal").classList.add("open");
-        setTimeout(
-          () => document.getElementById("delete-confirm-btn").focus(),
-          50
-        );
+        document.getElementById("delete-modal").classList.add("open");
+        setTimeout(() => document.getElementById("delete-btn").focus(), 50);
       }
 
       function closeDeleteConfirmModal() {
-        document
-          .getElementById("delete-confirm-modal")
-          .classList.remove("open");
+        document.getElementById("delete-modal").classList.remove("open");
         pendingDeleteTag = null;
         focusSearch();
       }
 
-      document
-        .getElementById("delete-confirm-modal")
-        .addEventListener("click", (e) => {
-          if (e.target === document.getElementById("delete-confirm-modal"))
-            closeDeleteConfirmModal();
-        });
+      document.getElementById("delete-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("delete-modal"))
+          closeDeleteConfirmModal();
+      });
 
       async function confirmDeleteTag() {
         if (isDemoMode) {
@@ -3127,7 +3292,7 @@
           "assign-modal",
           "addtag-modal",
           "renametag-modal",
-          "delete-confirm-modal",
+          "delete-modal",
           "info-modal"
         ].some((id) => document.getElementById(id).classList.contains("open"));
       }
