@@ -1,6 +1,6 @@
 # Zerodha Dashboard (0dash)
 
-Live Portfolio Tracker for Zerodha - a self-hosted dashboard that connects to your Zerodha account via Kite Connect and shows your live holdings, P&L, and statistics in one place.
+Zerodha Dashboard is a portfolio tracking tool that helps you monitor your holdings, organize them into custom tags or groups, and track their performance.
 
 🌐 **Visit Here -** [0dash.vercel.app](https://0dash.vercel.app)
 
