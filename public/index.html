@@ -570,11 +570,18 @@
       .stat .lbl-row {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         margin-bottom: 8px;
       }
       .stat .lbl-row .lbl {
         margin-bottom: 0;
+      }
+      .stat .lbl-row .lbl:last-child {
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+      }
+      .stat:hover .lbl-row .lbl:last-child {
+        opacity: 1;
       }
       .val {
         font-size: 26px;
@@ -1351,6 +1358,10 @@
         >
           <div class="lbl-row">
             <span class="lbl">Total Investment</span>
+            <span class="lbl">
+              <span class="status-sep">·</span>
+              Cash
+            </span>
           </div>
           <div class="val-row">
             <div class="val" id="inv">
@@ -1368,6 +1379,7 @@
         >
           <div class="lbl-row">
             <span class="lbl">Current Value</span>
+            <span class="lbl"></span>
           </div>
           <div class="val-row">
             <div class="val" id="cur">
@@ -1382,6 +1394,10 @@
         >
           <div class="lbl-row">
             <span class="lbl">Day's P&amp;L</span>
+            <span class="lbl">
+              <span class="status-sep">·</span>
+              <span id="tdc-sublabel">P&amp;L (%)</span>
+            </span>
           </div>
           <div class="val-row">
             <div class="val g" id="tdc">
@@ -1400,6 +1416,10 @@
         >
           <div class="lbl-row">
             <span class="lbl">Total P&amp;L</span>
+            <span class="lbl">
+              <span class="status-sep">·</span>
+              <span id="pnl-sublabel">P&amp;L (%)</span>
+            </span>
           </div>
           <div class="val-row">
             <div class="val g" id="pnl">
@@ -1877,7 +1897,7 @@
             (m === "total" && weightMode === "totalBr");
           el.classList.toggle("weight-active", isActive);
         });
-        updateTags();
+        renderTagFilterRow();
         renderTable();
         updatePnlSummary();
       }
@@ -1923,20 +1943,28 @@
         const statDay = document.getElementById("stat-day");
         const tdcPct = document.getElementById("tdc-pct");
         const tdcBreadth = document.getElementById("tdc-breadth");
+        const tdcSublabel = document.getElementById("tdc-sublabel");
         if (statDay && tdcPct && tdcBreadth) {
           statDay.style.setProperty("--breadth-pct", dayBreadthPct + "%");
           statDay.classList.toggle("breadth-hover", dayPref === "dayBr");
           tdcPct.style.display = dayPref === "dayBr" ? "none" : "";
           tdcBreadth.style.display = dayPref === "dayBr" ? "" : "none";
+          if (tdcSublabel)
+            tdcSublabel.textContent =
+              dayPref === "dayBr" ? "Market Breadth" : "P&L (%)";
         }
         const statTotal = document.getElementById("stat-total");
         const pnlPct = document.getElementById("pnl-pct");
         const pnlBreadth = document.getElementById("pnl-breadth");
+        const pnlSublabel = document.getElementById("pnl-sublabel");
         if (statTotal && pnlPct && pnlBreadth) {
           statTotal.style.setProperty("--breadth-pct", totalBreadthPct + "%");
           statTotal.classList.toggle("breadth-hover", totalPref === "totalBr");
           pnlPct.style.display = totalPref === "totalBr" ? "none" : "";
           pnlBreadth.style.display = totalPref === "totalBr" ? "" : "none";
+          if (pnlSublabel)
+            pnlSublabel.textContent =
+              totalPref === "totalBr" ? "Market Breadth" : "P&L (%)";
         }
       }
 
@@ -2080,11 +2108,13 @@
             }
           } else toastShown = false;
           renderSummary();
-          updateTags();
           renderTable();
           if (!cleanupDone) {
             cleanupDone = true;
+            renderTagFilterRow();
             runCleanup();
+          } else {
+            updateTags();
           }
         } catch (e) {
           setStatus(0);
@@ -2290,7 +2320,7 @@
 
       // ── Render: Tag filter row ────────────────────────
       function snapToBand(pct) {
-        const bands = [20, 40, 60, 80, 100];
+        const bands = [5, 10, 20, 40, 60, 80, 100];
         for (const b of bands) {
           if (pct <= b) return b;
         }
@@ -2369,8 +2399,26 @@
         };
       }
 
+      function tagWeightage(t) {
+        const syms = Object.keys(stockTags).filter((s) =>
+          (stockTags[s] || []).includes(t)
+        );
+        const stocks = H.filter((h) => syms.includes(h.tradingsymbol));
+        const field =
+          weightMode === "invested"
+            ? "_wtInvested"
+            : weightMode === "current"
+              ? "_wtCurrent"
+              : weightMode === "day" || weightMode === "dayBr"
+                ? "_wtDay"
+                : "_wtTotal";
+        return stocks.reduce((a, h) => a + (h[field] || 0), 0);
+      }
+
       function renderTagFilterRow() {
-        const sorted = [...globalTags].sort((a, b) => a.localeCompare(b));
+        const sorted = [...globalTags].sort(
+          (a, b) => tagWeightage(a) - tagWeightage(b)
+        );
         const pillsHtml = [];
 
         sorted.forEach((t) => {
