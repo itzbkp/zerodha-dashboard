@@ -1,3 +1,7 @@
+<p align="center">
+   <img width="800" height="515" alt="zerodha-dashboard" src="https://github.com/user-attachments/assets/4fa56ff1-73fe-4368-987f-1d2b733e58d8" />
+</p>
+
 # Zerodha Dashboard (0dash)
 
 Zerodha Dashboard is a portfolio tracking tool that helps you monitor your holdings, organize them into custom tags or groups, and track their performance.
